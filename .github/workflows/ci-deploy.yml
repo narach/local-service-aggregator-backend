@@ -50,3 +50,21 @@ jobs:
                         aws s3 cp s3://service-aggregator-artifacts/myapp-${{ github.sha }}.jar app.jar &&
                         sudo systemctl restart springapp
                       "
+
+  smoke-test:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Wait until /actuator/health is UP
+        timeout-minutes: 2
+        run: |
+          for i in {1..30}; do
+            if curl -fs http://13.48.26.62:8080/actuator/health | grep -q '"UP"'; then
+              echo "Service is healthy ✅"
+              exit 0
+            fi
+            echo "Waiting for service…"
+            sleep 4
+          done
+          echo "Health check failed ❌"
+          exit 1
