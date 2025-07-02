@@ -19,10 +19,10 @@ public class MastersController {
         return buildSampleMasters();
     }
 
-    @GetMapping("/{id}")
-    private ResponseEntity<Master> getMasterById(@PathVariable Long id) {
+    @GetMapping("/{ID}")
+    private ResponseEntity<Master> getMasterById(@PathVariable Long ID) {
         return buildSampleMasters().stream()
-                .filter(m -> m.getId().equals(id))
+                .filter(m -> m.getId().equals(ID))
                 .findFirst()
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound()
