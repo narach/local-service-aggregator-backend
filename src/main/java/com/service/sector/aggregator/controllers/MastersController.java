@@ -1,7 +1,9 @@
 package com.service.sector.aggregator.controllers;
 
 import com.service.sector.aggregator.data.Master;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,15 +16,25 @@ public class MastersController {
 
     @GetMapping("/list")
     private List<Master> listMasters() {
+        return buildSampleMasters();
+    }
+
+    @GetMapping("/{id}")
+    private ResponseEntity<Master> getMasterById(@PathVariable Long id) {
+        return buildSampleMasters().stream()
+                .filter(m -> m.getId().equals(id))
+                .findFirst()
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound()
+                        .build());
+    }
+
+    /** helper builds the same dummy data you already use */
+    private List<Master> buildSampleMasters() {
         List<Master> masters = new ArrayList<>();
-
-        Master m1 = new Master(1L, "Ivanov", "Hairdresser");
-        Master m2 = new Master(2L, "Petrov", "Manicure");
-        Master m3 = new Master(3L, "Sidorov", "Phone Repair");
-        masters.add(m1);
-        masters.add(m2);
-        masters.add(m3);
-
+        masters.add(new Master(1L, "Ivanov",  "Hairdresser"));
+        masters.add(new Master(2L, "Petrov",  "Manicure"));
+        masters.add(new Master(3L, "Sidorov", "Phone Repair"));
         return masters;
     }
 }
