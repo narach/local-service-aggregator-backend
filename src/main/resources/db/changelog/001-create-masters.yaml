@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-masters
+      author: Siarhei Naralenkau
+      changes:
+        - createTable:
+            tableName: masters
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: speciality
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
