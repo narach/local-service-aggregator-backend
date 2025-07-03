@@ -34,13 +34,13 @@ dependencies {
 	implementation 'org.postgresql:postgresql:42.7.3'
 	implementation 'org.liquibase:liquibase-core'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
-	implementation 'io.awspring.cloud:spring-cloud-starter-aws-parameter-store-config:3.0.3'
+
+
+	implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:3.1.1')
+	/* correct starter (no “-config” suffix) */
+	implementation 'io.awspring.cloud:spring-cloud-aws-starter-parameter-store'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.apache.httpcomponents.client5:httpclient5'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-tasks.named('test') {
-	useJUnitPlatform()
 }
