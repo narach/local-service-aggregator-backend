@@ -68,3 +68,9 @@ jobs:
           done
           echo "Health check failed ❌"
           exit 1
+
+  doc-check:
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    steps:
+      - run: curl --fail -s http://13.48.26.62:8080/v3/api-docs >/dev/null
