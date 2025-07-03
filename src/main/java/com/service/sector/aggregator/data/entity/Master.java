@@ -1,4 +1,4 @@
-package com.service.sector.aggregator.data;
+package com.service.sector.aggregator.data.entity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;

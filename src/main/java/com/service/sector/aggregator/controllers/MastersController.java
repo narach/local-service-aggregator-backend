@@ -1,6 +1,6 @@
 package com.service.sector.aggregator.controllers;
 
-import com.service.sector.aggregator.data.Master;
+import com.service.sector.aggregator.data.entity.Master;
 import com.service.sector.aggregator.data.dto.CreateMasterRequest;
 import com.service.sector.aggregator.data.repositories.MasterRepository;
 import io.swagger.v3.oas.annotations.Operation;
