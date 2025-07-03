@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-master-id-seq
+      author: Siarhei Naralenkau
+      changes:
+        - addAutoIncrement:
+            tableName: masters
+            columnName: id
+            columnDataType: BIGINT
+            incrementBy: 1
+            startWith: 1
