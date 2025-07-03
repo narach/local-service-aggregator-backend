@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController()
@@ -23,17 +22,14 @@ public class MastersController {
 
     @GetMapping("/list")
     private List<Master> listMasters() {
-        return buildSampleMasters();
+        return repo.findAll();
     }
 
-    @GetMapping("/{ID}")
-    private ResponseEntity<Master> getMasterById(@PathVariable Long ID) {
-        return buildSampleMasters().stream()
-                .filter(m -> m.getId().equals(ID))
-                .findFirst()
+    @GetMapping("/{id}")
+    private ResponseEntity<Master> getMasterById(@PathVariable Long id) {
+        return repo.findById(id)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound()
-                        .build());
+                .orElseGet( () -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -46,14 +42,5 @@ public class MastersController {
                 .toUri();
 
         return ResponseEntity.created(location).body(saved);
-    }
-
-    /** helper builds the same dummy data you already use */
-    private List<Master> buildSampleMasters() {
-        List<Master> masters = new ArrayList<>();
-        masters.add(new Master(1L, "Ivanov",  "Hairdresser"));
-        masters.add(new Master(2L, "Petrov",  "Manicure"));
-        masters.add(new Master(3L, "Sidorov", "Phone Repair"));
-        return masters;
     }
 }
