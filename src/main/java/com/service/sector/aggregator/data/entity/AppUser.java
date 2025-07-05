@@ -68,6 +68,5 @@ public class AppUser {
         this.updatedAt = updatedAt;
     }
 
-    /* getters / setters / equals / hashCode / toString */
 }
 
