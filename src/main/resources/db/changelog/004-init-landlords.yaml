@@ -1,0 +1,172 @@
+databaseChangeLog:
+
+  # ---------- 1. ENUM через raw SQL ----------
+  - changeSet:
+      id: 20250705-workspace-status-type
+      author: chatgpt
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE TYPE workspace_status AS ENUM (
+                'DRAFT',
+                'UNDER_REVIEW',
+                'APPROVED',
+                'REJECTED'
+              );
+
+      rollback:
+        - sql:
+            splitStatements: false
+            sql: |
+              DROP TYPE IF EXISTS workspace_status;
+
+  # ---------- 2. Таблица workspace ----------
+  - changeSet:
+      id: 20250705-workspace-main
+      author: chatgpt
+      changes:
+        - createTable:
+            tableName: workspace
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: owner_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: city
+                  type: VARCHAR(120)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: address
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: latitude
+                  type: NUMERIC(9,6)
+              - column:
+                  name: longitude
+                  type: NUMERIC(9,6)
+
+              - column:
+                  name: kind
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+
+              - column: { name: description, type: TEXT }
+
+              - column:
+                  name: open_time
+                  type: TIME
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: close_time
+                  type: TIME
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: working_days_mask
+                  type: SMALLINT
+                  defaultValueNumeric: 62      # Пн–Пт
+
+              - column:
+                  name: min_rent_minutes
+                  type: INT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: price_per_hour
+                  type: NUMERIC(10,2)
+                  constraints:
+                    nullable: false
+
+              - column: { name: legal_name,            type: VARCHAR(255) }
+              - column: { name: legal_registration_no, type: VARCHAR(120) }
+              - column: { name: legal_details,         type: TEXT }
+
+              - column:
+                  name: terms_accepted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+
+              - column: { name: terms_accepted_at, type: TIMESTAMPTZ }
+
+              - column:
+                  name: status
+                  type: workspace_status
+                  defaultValue: DRAFT
+
+              - column: { name: created_at, type: TIMESTAMPTZ, defaultValueComputed: NOW() }
+              - column: { name: updated_at, type: TIMESTAMPTZ, defaultValueComputed: NOW() }
+
+        # CHECK-constraint'ы — через raw SQL
+        - sql:
+            splitStatements: true
+            sql: |
+              ALTER TABLE workspace
+                ADD CONSTRAINT chk_workspace_time      CHECK (open_time < close_time),
+                ADD CONSTRAINT chk_workspace_min_rent CHECK (min_rent_minutes > 0),
+                ADD CONSTRAINT chk_workspace_price    CHECK (price_per_hour > 0);
+
+        # FK на пользователей при необходимости
+        - addForeignKeyConstraint:
+            baseTableName: workspace
+            baseColumnNames: owner_id
+            constraintName: fk_workspace_owner
+            referencedTableName: app_user
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  # ---------- 3. Таблица фото ----------
+  - changeSet:
+      id: 20250705-workspace-photo
+      author: chatgpt
+      changes:
+        - createTable:
+            tableName: workspace_photo
+            columns:
+              - column: { name: id, type: BIGSERIAL, constraints: { primaryKey: true } }
+              - column: { name: workspace_id, type: BIGINT, constraints: { nullable: false } }
+              - column: { name: file_path, type: VARCHAR(500), constraints: { nullable: false } }
+              - column: { name: "order", type: SMALLINT, constraints: { nullable: false } }
+              - column: { name: created_at, type: TIMESTAMPTZ, defaultValueComputed: NOW() }
+
+        - addForeignKeyConstraint:
+            baseTableName: workspace_photo
+            baseColumnNames: workspace_id
+            constraintName: fk_photo_workspace
+            referencedTableName: workspace
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+      rollback:
+        - dropTable: { tableName: workspace_photo }
+        - dropTable: { tableName: workspace }
+        - sql:
+            splitStatements: false
+            sql: |
+              DROP TYPE IF EXISTS workspace_status;
