@@ -4,6 +4,8 @@ import com.service.sector.aggregator.data.entity.AppUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 /**
  * Spring Data интерфейс для доступа к таблице app_user.
  *<p>
@@ -11,13 +13,10 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface AppUserRepository extends JpaRepository<AppUser, Long> {
-
-    /**
-     * Проверка, зарегистрирован ли уже пользователь с таким email.
-     * Spring Data построит реализацию автоматически.
-     *
-     * @param email e-mail адрес
-     * @return true, если запись существует
-     */
     boolean existsByEmail(String email);
+    boolean existsByPhone(String phone);
+
+    Optional<AppUser> findByEmail(String email);
+    Optional<AppUser> findByPhone(String phone);
+    Optional<AppUser> findByEmailOrPhone(String email, String phone);
 }

@@ -18,7 +18,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
                         description = "Local host"
                 ),
                 @Server(
-                        url         = "http://13.62.49.90:8080",
+                        url         = "https://aggregator.duckdns.org",
                         description = "EC2 instance"
                 )
         }

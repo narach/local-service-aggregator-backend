@@ -1,0 +1,69 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20250709-user-extend
+      author: chatgpt
+      changes:
+
+        # 1. Add phone column (nullable, unique)
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: phone
+                  type: VARCHAR(20)
+
+        # 2. Add password column (NOT NULL)
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+        # 3. Make e-mail nullable (was NOT NULL in initial script)
+        - dropNotNullConstraint:
+            tableName: app_user
+            columnName: email
+            columnDataType: VARCHAR(255)
+
+        # 4. Unique constraint for phone
+        - addUniqueConstraint:
+            tableName: app_user
+            columnNames: phone
+            constraintName: uc_user_phone
+
+        # 5. Table-level check: at least one of email or phone present
+        # CHECK-constraint'ы — через raw SQL
+        - sql:
+            splitStatements: true
+            sql: |
+              ALTER TABLE app_user
+                ADD CONSTRAINT chk_user_contact      CHECK (email IS NOT NULL OR phone IS NOT NULL);
+
+      rollback:
+        # Reverse operations in exact opposite order
+        - sql:
+            splitStatements: false
+            sql: |
+              ALTER TABLE app_user
+              DROP CONSTRAINT IF EXISTS chk_user_contact;
+
+        - dropUniqueConstraint:
+            tableName: app_user
+            constraintName: uc_user_phone
+
+        - addNotNullConstraint:
+            tableName: app_user
+            columnName: email
+            columnDataType: VARCHAR(255)
+
+        - dropColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: password
+              - column:
+                  name: phone
