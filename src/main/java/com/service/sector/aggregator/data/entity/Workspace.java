@@ -1,5 +1,6 @@
 package com.service.sector.aggregator.data.entity;
 
+import com.service.sector.aggregator.data.enums.Status;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -99,7 +100,4 @@ public class Workspace {
     @OrderBy("order ASC")
     @Builder.Default                 // <- Lombok initialises field when using @Builder
     private List<WorkspacePhoto> photos = new ArrayList<>();
-
-    // --- enum ---
-    public enum Status { DRAFT, UNDER_REVIEW, APPROVED, REJECTED }
 }

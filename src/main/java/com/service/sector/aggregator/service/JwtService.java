@@ -37,4 +37,9 @@ public class JwtService {
                 .getClaim("uid")
                 .asLong();
     }
+
+    public Long extractUserId(String bearerToken) {
+        String token = bearerToken.replace("Bearer ", "");
+        return parseUserId(token);
+    }
 }
