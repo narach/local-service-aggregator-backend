@@ -83,8 +83,8 @@ public class Workspace {
 
     private OffsetDateTime termsAcceptedAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)          // still stores enum name as text
+    @Column(length = 50)                 // optional, matches Liquibase change
     private Status status = Status.DRAFT;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -93,9 +93,11 @@ public class Workspace {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
-    /** Photos ordered for presentation; cascade all. */
-    @OneToMany(mappedBy = "workspace", orphanRemoval = true, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "workspace",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
     @OrderBy("order ASC")
+    @Builder.Default                 // <- Lombok initialises field when using @Builder
     private List<WorkspacePhoto> photos = new ArrayList<>();
 
     // --- enum ---

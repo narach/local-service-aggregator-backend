@@ -29,4 +29,12 @@ public class JwtService {
                 .withExpiresAt(Date.from(now.plusSeconds(expiresMinutes * 60)))
                 .sign(Algorithm.HMAC256(secret));
     }
+
+    public Long parseUserId(String token) {
+        return JWT.require(Algorithm.HMAC256(secret))
+                .build()
+                .verify(token)
+                .getClaim("uid")
+                .asLong();
+    }
 }
