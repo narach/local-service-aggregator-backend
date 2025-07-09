@@ -48,6 +48,13 @@ jobs:
           git push
       # -------------------------------------------------------------------------
 
+      - name: Locate built JAR
+        id: jar
+        run: |
+          JAR=$(find . -path "*/build/libs/*.jar" -name "*${{ steps.bump.outputs.new_version }}.jar" | head -n1)
+          echo "JAR=$JAR"
+          echo "jar_path=$JAR" >> "$GITHUB_OUTPUT"
+
       - name: Male wrapper executable
         run: chmod +x ./gradlew
 
@@ -61,9 +68,9 @@ jobs:
         id: upload
         run: |
           KEY="myapp-${{ steps.bump.outputs.new_version }}.jar"
-          aws s3 cp build/libs/aggregator-${{ steps.bump.outputs.new_version }}.jar \
-                  s3://service-aggregator-artifacts/$KEY \
-                  --metadata "latest=true"
+          aws s3 cp "${{ steps.jar.outputs.jar_path }}" \
+                   "s3://service-aggregator-artifacts/$KEY" \
+                   --metadata "latest=true"
           echo "s3_key=$KEY" >>"$GITHUB_OUTPUT"
 
   # ────────────────────────────────────────────────────────────────────────────────
