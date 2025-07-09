@@ -55,14 +55,8 @@ public class AppUserController {
             @RequestBody(description = "User registration payload", required = true)
             @Valid @org.springframework.web.bind.annotation.RequestBody AppUserRequest req) {
 
-        boolean hasEmail = StringUtils.hasText(req.email());
-        boolean hasPhone = StringUtils.hasText(req.phone());
-
-        /* 1. validate “email XOR phone” rule */
-        if (!StringUtils.hasText(req.email()) && !StringUtils.hasText(req.phone())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Either e-mail or phone must be provided");
-        }
+        boolean hasEmail  = StringUtils.hasText(req.email());
+        boolean hasPhone  = StringUtils.hasText(req.phone());
 
         /* 2. uniqueness checks */
         if (hasEmail && userRepo.existsByEmail(req.email())) {
