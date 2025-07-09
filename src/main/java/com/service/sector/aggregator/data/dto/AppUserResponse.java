@@ -11,5 +11,6 @@ public record AppUserResponse(
         String email,
         String phone,
         String realName,
+        String role, // enum name
         OffsetDateTime createdAt
 ) {}

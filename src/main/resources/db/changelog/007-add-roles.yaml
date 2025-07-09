@@ -1,0 +1,95 @@
+databaseChangeLog:
+
+  # ── 1. ROLE table ────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 20250711-create-role-table
+      author: chatgpt
+      changes:
+        - createTable:
+            tableName: role
+            columns:
+              - column: { name: id, type: BIGSERIAL, constraints: { primaryKey: true } }
+              - column: { name: role_name, type: VARCHAR(50), constraints: { nullable: false } }
+              - column: { name: description, type: TEXT }
+
+        - addUniqueConstraint:
+            tableName: role
+            columnNames: role_name
+            constraintName: uc_role_name
+
+  # ── 2. Seed the four roles (fixed IDs so we can reference ‘1’ for admin) ──────
+  - changeSet:
+      id: 20250711-seed-roles
+      author: chatgpt
+      changes:
+        - insert:
+            tableName: role
+            columns:
+              - column: { name: id,         valueNumeric: 1 }
+              - column: { name: role_name,  value: ADMINISTRATOR }
+              - column: { name: description, value: "Platform admin & moderation" }
+
+        - insert:
+            tableName: role
+            columns:
+              - column: { name: id,        valueNumeric: 2 }
+              - column: { name: role_name, value: LANDLORD }
+              - column: { name: description, value: "Workspace owner / staff" }
+
+        - insert:
+            tableName: role
+            columns:
+              - column: { name: id,        valueNumeric: 3 }
+              - column: { name: role_name, value: MASTER }
+              - column: { name: description, value: "Service provider (hair, nails…)" }
+
+        - insert:
+            tableName: role
+            columns:
+              - column: { name: id,        valueNumeric: 4 }
+              - column: { name: role_name, value: CUSTOMER }
+              - column: { name: description, value: "End-user looking for masters" }
+
+  # ── 3. Add role_id to app_user  ──────────────────────────────────────────────
+  - changeSet:
+      id: 20250711-add-role-to-user
+      author: chatgpt
+      changes:
+        # 3.1 column with default ‘1’ (Administrator) so existing rows pass NOT NULL
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: role_id
+                  type: BIGINT
+                  defaultValueNumeric: 1
+                  constraints: { nullable: false }
+
+        # 3.2 foreign key
+        - addForeignKeyConstraint:
+            baseTableName: app_user
+            baseColumnNames: role_id
+            constraintName: fk_user_role
+            referencedTableName: role
+            referencedColumnNames: id
+            onDelete: RESTRICT
+
+        # 3.3 (optional) drop DEFAULT after data migrated
+        - sql:
+            splitStatements: false
+            sql: |
+              ALTER TABLE app_user ALTER COLUMN role_id DROP DEFAULT;
+
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: app_user
+            constraintName: fk_user_role
+        - dropColumn:
+            tableName: app_user
+            columns:
+              - column: { name: role_id }
+        - delete:
+            tableName: role
+            where: "id IN (1,2,3,4)"
+        - dropTable:
+            tableName: role
