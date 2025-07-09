@@ -1,36 +1,74 @@
+name: CI-CD
+
 on:
   push:
     branches: [ master ]
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
+  # ────────────────────────────────────────────────────────────────────────────────
+  # 1. BUILD  ─ bump minor → build Jar → upload to S3
+  # ────────────────────────────────────────────────────────────────────────────────
   build:
     runs-on: ubuntu-latest
+    outputs:
+      new-version: ${{ steps.bump.outputs.new_version }}
+      jar-key: ${{ steps.upload.outputs.s3_key }}
     steps:
       - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      # --- 1.1 bump minor version & commit it back -----------------------------
+      - name: Bump minor version
+        id: bump
+        run: |
+          FILE=build.gradle     # or gradle.properties
+          # extract current version '1.12.0'
+          CUR=$(grep -Eo "version\\s*=\\s*'[^']+'" "$FILE" | cut -d"'" -f2)
+          MAJOR=${CUR%%.*}
+          MINOR=${CUR#"$MAJOR."}
+          MINOR=${MINOR%%.*}
+          NEW_MINOR=$((MINOR+1))
+          NEW="$MAJOR.$NEW_MINOR.0"
+          echo "🔖 bump $CUR ➜ $NEW"
+          
+          # update file
+          sed -i -E "s/version\\s*=\\s*'[^']+'$/version = '$NEW'/" "$FILE"
+          
+          # export for later steps
+          echo "new_version=$NEW" >>"$GITHUB_OUTPUT"
+          
+          # commit
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "ci: bump version to $NEW"
+          git push
+      # -------------------------------------------------------------------------
 
       - name: Male wrapper executable
         run: chmod +x ./gradlew
 
-      - uses: actions/setup-java@v4
+        # --- 1.2 upload jar with version in key ----------------------------------
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
-          distribution: corretto
-          java-version: '21'
-
-      - run: ./gradlew clean bootJar
+         role-to-assume: arn:aws:iam::805598450555:role/github-ci-deploy
+         aws-region: eu-north-1
 
       - name: Upload JAR to S3
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::805598450555:role/github-ci-deploy
-          aws-region: eu-north-1
-      - run: |
-          aws s3 cp build/libs/aggregator-0.0.1-SNAPSHOT.jar s3://service-aggregator-artifacts/myapp-${{ github.sha }}.jar \
-                      --metadata "latest=true"
+        id: upload
+        run: |
+          KEY="myapp-${{ steps.bump.outputs.new_version }}.jar"
+          aws s3 cp build/libs/aggregator-${{ steps.bump.outputs.new_version }}.jar \
+                  s3://service-aggregator-artifacts/$KEY \
+                  --metadata "latest=true"
+          echo "s3_key=$KEY" >>"$GITHUB_OUTPUT"
 
+  # ────────────────────────────────────────────────────────────────────────────────
+  # 2. DEPLOY  ─ pull that jar onto EC2 via SSM
+  # ────────────────────────────────────────────────────────────────────────────────
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -42,15 +80,17 @@ jobs:
       - name: Replace JAR on EC2 via SSM
         run: |
           aws ssm send-command \
-                      --instance-ids i-07aca7d569f55d118 \
-                      --document-name 'AWS-RunShellScript' \
-                      --comment "Deploy build ${{ github.sha }}" \
-                      --parameters commands="
-                        cd /opt/springapp &&
-                        aws s3 cp s3://service-aggregator-artifacts/myapp-${{ github.sha }}.jar app.jar &&
-                        sudo systemctl restart springapp
-                      "
+            --instance-ids i-07aca7d569f55d118 \
+            --document-name 'AWS-RunShellScript' \
+            --comment "Deploy build ${{ needs.build.outputs.new-version }}" \
+            --parameters commands="\
+              cd /opt/springapp && \
+              aws s3 cp s3://service-aggregator-artifacts/${{ needs.build.outputs.jar-key }} app.jar && \
+              sudo systemctl restart springapp \
 
+  # ────────────────────────────────────────────────────────────────────────────────
+  # 3. SMOKE TEST  & 4. DOC CHECK (unchanged, now use new version)
+  # ────────────────────────────────────────────────────────────────────────────────
   smoke-test:
     runs-on: ubuntu-latest
     needs: deploy
