@@ -1,0 +1,47 @@
+# 20250710-workspace-status-to-varchar.yaml
+databaseChangeLog:
+
+  - changeSet:
+      id: 20250710-workspace-status-to-varchar
+      author: chatgpt
+      changes:
+
+        # 0. Drop DEFAULT that depends on enum
+        - sql:
+            splitStatements: false
+            sql: |
+              ALTER TABLE workspace
+              ALTER COLUMN status DROP DEFAULT;
+
+        # 1. Convert column to VARCHAR
+        - modifyDataType:
+            tableName: workspace
+            columnName: status
+            newDataType: VARCHAR(50)
+
+        # 2. Drop enum type (no dependencies now)
+        - sql:
+            splitStatements: false
+            sql: |
+              DROP TYPE IF EXISTS workspace_status CASCADE;
+
+      rollback:
+        # Re-create enum
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE TYPE workspace_status AS ENUM (
+                'DRAFT','UNDER_REVIEW','APPROVED','REJECTED'
+              );
+
+        # Restore column as enum and default
+        - modifyDataType:
+            tableName: workspace
+            columnName: status
+            newDataType: workspace_status USING status::workspace_status
+
+        - sql:
+            splitStatements: false
+            sql: |
+              ALTER TABLE workspace
+              ALTER COLUMN status SET DEFAULT 'DRAFT';

@@ -1,0 +1,44 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20250705-user
+      author: chatgpt
+      changes:
+        - createTable:
+            tableName: app_user
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: real_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+
+        - addUniqueConstraint:
+            tableName: app_user
+            columnNames: email
+            constraintName: uc_user_email
+
+      rollback:
+        - dropTable:
+            tableName: app_user

@@ -1,3 +1,7 @@
 databaseChangeLog:
   - include: { file: db/changelog/001-create-masters.yaml }
   - include: { file: db/changelog/002-master-id-autoinc.yaml }
+  - include: { file: db/changelog/003-init-user.yaml }
+  - include: { file: db/changelog/004-init-landlords.yaml }
+  - include: { file: db/changelog/005-update-user.yaml }
+  - include: { file: db/changelog/006-update-workspace-status-type.yaml }

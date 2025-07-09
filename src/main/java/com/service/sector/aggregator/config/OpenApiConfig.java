@@ -12,6 +12,15 @@ import io.swagger.v3.oas.annotations.servers.Server;
                 description = "CRUD for masters, bookings, etc.",
                 contact     = @Contact(name = "API Support", email = "support@example.com")
         ),
-        servers = @Server(url = "http://13.62.49.90:8080")   // Will be changed later when we switch to HTTPS/ALB
+        servers = {
+                @Server(
+                        url         = "http://localhost:8080",
+                        description = "Local host"
+                ),
+                @Server(
+                        url         = "https://aggregator.duckdns.org",
+                        description = "EC2 instance"
+                )
+        }
 )
 public class OpenApiConfig {}
