@@ -48,15 +48,17 @@ jobs:
           git push
       # -------------------------------------------------------------------------
 
+      - name: Male wrapper executable
+        run: chmod +x ./gradlew
+
+      - run: ./gradlew clean bootJar
+
       - name: Locate built JAR
         id: jar
         run: |
           JAR=$(find . -path "*/build/libs/*.jar" -name "*${{ steps.bump.outputs.new_version }}.jar" | head -n1)
           echo "JAR=$JAR"
           echo "jar_path=$JAR" >> "$GITHUB_OUTPUT"
-
-      - name: Male wrapper executable
-        run: chmod +x ./gradlew
 
         # --- 1.2 upload jar with version in key ----------------------------------
       - uses: aws-actions/configure-aws-credentials@v4
