@@ -92,10 +92,12 @@ jobs:
             --instance-ids i-07aca7d569f55d118 \
             --document-name 'AWS-RunShellScript' \
             --comment "Deploy build ${{ needs.build.outputs.new-version }}" \
-            --parameters commands="\
-              cd /opt/springapp && \
-              aws s3 cp s3://service-aggregator-artifacts/${{ needs.build.outputs.jar-key }} app.jar && \
-              sudo systemctl restart springapp \
+            --parameters '{"commands":[
+              "cd /opt/springapp",
+              "aws s3 cp s3://service-aggregator-artifacts/${{ needs.build.outputs.jar-key }} app.jar",
+              "sudo systemctl restart springapp"
+            ]}' \
+            --output text
 
   # ────────────────────────────────────────────────────────────────────────────────
   # 3. SMOKE TEST  & 4. DOC CHECK (unchanged, now use new version)
