@@ -51,6 +51,7 @@ dependencies {
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.apache.httpcomponents.client5:httpclient5'
+	testImplementation 'org.springframework.boot:spring-boot-starter-validation'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 	/* tests also need the annotations resolved */
@@ -59,5 +60,6 @@ dependencies {
 }
 
 test {
+	useJUnitPlatform()
 	systemProperty 'spring.profiles.active', 'test'
 }

@@ -5,7 +5,10 @@ import com.service.sector.aggregator.data.dto.AppUserResponse;
 import com.service.sector.aggregator.data.dto.auth.AuthRequest;
 import com.service.sector.aggregator.data.dto.auth.AuthResponse;
 import com.service.sector.aggregator.data.entity.AppUser;
+import com.service.sector.aggregator.data.entity.Role;
+import com.service.sector.aggregator.data.enums.RoleName;
 import com.service.sector.aggregator.data.repositories.AppUserRepository;
+import com.service.sector.aggregator.data.repositories.RoleRepository;
 import com.service.sector.aggregator.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -35,50 +38,68 @@ import java.time.OffsetDateTime;
 @RequiredArgsConstructor
 public class AppUserController {
 
-    private final AppUserRepository userRepository;
+    private final AppUserRepository userRepo;
+    private final RoleRepository roleRepo;
     private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder encoder = new BCryptPasswordEncoder();
 
     @Operation(summary = "Register new user", description = "Creates a new AppUser with unique e‑mail or phone")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "User successfully created",
+            @ApiResponse(responseCode = "201", description = "Created",
                     content = @Content(schema = @Schema(implementation = AppUserResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Contact already registered", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "409", description = "Email or phone already registered")
     })
     @PostMapping
     public ResponseEntity<AppUserResponse> register(
             @RequestBody(description = "User registration payload", required = true)
-            @Valid @org.springframework.web.bind.annotation.RequestBody AppUserRequest request) {
+            @Valid @org.springframework.web.bind.annotation.RequestBody AppUserRequest req) {
 
-        boolean hasEmail = StringUtils.hasText(request.email());
-        boolean hasPhone = StringUtils.hasText(request.phone());
+        boolean hasEmail  = StringUtils.hasText(req.email());
+        boolean hasPhone  = StringUtils.hasText(req.phone());
 
-        if (hasEmail && userRepository.existsByEmail(request.email())) {
+        /* 2. uniqueness checks */
+        if (hasEmail && userRepo.existsByEmail(req.email())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
         }
-        if (hasPhone && userRepository.existsByPhone(request.phone())) {
+        if (hasPhone && userRepo.existsByPhone(req.phone())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Phone already registered");
         }
 
+        /* 3. role lookup */
+        RoleName rn;
+        try {
+            rn = RoleName.valueOf(req.role().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown role: " + req.role());
+        }
+        Role role = roleRepo.findByRoleName(rn)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Role not seeded in DB"));
+
+        /* 4. build & persist user */
         AppUser user = AppUser.builder()
-                .email(hasEmail ? request.email() : null)
-                .phone(hasPhone ? request.phone() : null)
-                .realName(request.realName())
-                .password(passwordEncoder.encode(request.password()))
+                .email(req.email())
+                .phone(req.phone())
+                .realName(req.realName())
+                .password(encoder.encode(req.password()))
+                .role(role)
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now())
                 .build();
 
-        AppUser saved = userRepository.save(user);
+        AppUser saved = userRepo.save(user);
 
-        AppUserResponse response = new AppUserResponse(
+        /* 5. response */
+        AppUserResponse resp = new AppUserResponse(
                 saved.getId(),
                 saved.getEmail(),
                 saved.getPhone(),
                 saved.getRealName(),
+                saved.getRole().getRoleName().name(),
                 saved.getCreatedAt());
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 
     // =====================================================================
@@ -97,14 +118,14 @@ public class AppUserController {
 
         AppUser user;
         if (StringUtils.hasText(req.email())) {
-            user = userRepository.findByEmail(req.email())
+            user = userRepo.findByEmail(req.email())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         } else {
-            user = userRepository.findByPhone(req.phone())
+            user = userRepo.findByPhone(req.phone())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         }
 
-        if (!passwordEncoder.matches(req.password(), user.getPassword())) {
+        if (!encoder.matches(req.password(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid password");
         }
 

@@ -5,3 +5,5 @@ databaseChangeLog:
   - include: { file: db/changelog/004-init-landlords.yaml }
   - include: { file: db/changelog/005-update-user.yaml }
   - include: { file: db/changelog/006-update-workspace-status-type.yaml }
+  - include: { file: db/changelog/007-add-roles.yaml }
+

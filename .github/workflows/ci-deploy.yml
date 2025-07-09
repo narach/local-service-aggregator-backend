@@ -51,7 +51,7 @@ jobs:
       - name: Male wrapper executable
         run: chmod +x ./gradlew
 
-      - run: ./gradlew clean bootJar
+      - run: ./gradlew clean build
 
       - name: Locate built JAR
         id: jar
