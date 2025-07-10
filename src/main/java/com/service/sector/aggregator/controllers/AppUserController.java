@@ -66,24 +66,18 @@ public class AppUserController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Phone already registered");
         }
 
-        /* 3. role lookup */
-        RoleName rn;
-        try {
-            rn = RoleName.valueOf(req.role().toUpperCase());
-        } catch (IllegalArgumentException ex) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown role: " + req.role());
-        }
-        Role role = roleRepo.findByRoleName(rn)
+        // Any new user is registered like customer
+        Role customerRole = roleRepo.findByRoleName(RoleName.CUSTOMER)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Role not seeded in DB"));
+                "Role not seeded in DB"));
 
-        /* 4. build & persist user */
+        /* 3. build & persist user */
         AppUser user = AppUser.builder()
                 .email(req.email())
                 .phone(req.phone())
                 .realName(req.realName())
                 .password(encoder.encode(req.password()))
-                .role(role)
+                .role(customerRole)
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now())
                 .build();

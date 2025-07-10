@@ -17,9 +17,7 @@ public record AppUserRequest(
         @Pattern(
                 regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{6,}$",
                 message = "Password must be ≥6 chars and include lowercase, uppercase, number")
-        String password,
-        /* ADMINISTRATOR | LANDLORD | MASTER | CUSTOMER (case-insensitive) */
-        @NotBlank String role
+        String password
 ) {
     /** Bean‑validation cross‑field rule: at least one contact way present. */
     @AssertTrue(message = "Either email or phone must be provided")

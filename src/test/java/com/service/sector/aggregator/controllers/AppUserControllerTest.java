@@ -77,7 +77,7 @@ public class AppUserControllerTest {
         mvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(new AppUserRequest(
-                                "joe@mail.com", null, "Joe", "Password1!", "customer"))))
+                                "joe@mail.com", null, "Joe", "Password1!"))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("joe@mail.com"))
                 .andExpect(jsonPath("$.role").value("CUSTOMER"));
@@ -89,10 +89,10 @@ public class AppUserControllerTest {
         mvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(new AppUserRequest(
-                                null, "+38268754722", "Ann", "Password1!", "administrator"))))
+                                null, "+38268754722", "Ann", "Password1!"))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.phone").value("+38268754722"))
-                .andExpect(jsonPath("$.role").value("ADMINISTRATOR"));
+                .andExpect(jsonPath("$.role").value("CUSTOMER"));
     }
 
     // ── FAILURES ──────────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ public class AppUserControllerTest {
         mvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(new AppUserRequest(
-                                null, null, "Anon", "Password1!", "customer"))))
+                                null, null, "Anon", "Password1!"))))
                 .andExpect(status().isBadRequest());
     }
 
@@ -110,23 +110,15 @@ public class AppUserControllerTest {
         mvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(new AppUserRequest(
-                                "dup@mail.com", null, "Dup", "Password1!", "customer"))))
+                                "dup@mail.com", null, "Dup", "Password1!"))))
                 .andExpect(status().isConflict());
-    }
-
-    @Test void missingRole() throws Exception {
-        mvc.perform(post("/api/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(new AppUserRequest(
-                                "a@b.com", null, "NoRole", "Password1!", ""))))
-                .andExpect(status().isBadRequest());
     }
 
     @Test void missingRealName() throws Exception {
         mvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(new AppUserRequest(
-                                "a@b.com", null, "", "Password1!", "customer"))))
+                                "a@b.com", null, "", "Password1!"))))
                 .andExpect(status().isBadRequest());
     }
 
@@ -134,7 +126,7 @@ public class AppUserControllerTest {
         mvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(new AppUserRequest(
-                                "weak@mail.com", null, "Weak", "abc", "customer"))))
+                                "weak@mail.com", null, "Weak", "abc"))))
                 .andExpect(status().isBadRequest());
     }
 }
