@@ -1,6 +1,9 @@
 package com.service.sector.aggregator.data.dto;
 
+import com.service.sector.aggregator.data.entity.Role;
+
 import java.time.OffsetDateTime;
+import java.util.Set;
 
 /**
  * Public view of AppUser returned after registration/login.
@@ -11,6 +14,6 @@ public record AppUserResponse(
         String email,
         String phone,
         String realName,
-        String role, // enum name
+        Set<String> roles, // enum name
         OffsetDateTime createdAt
 ) {}

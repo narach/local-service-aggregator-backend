@@ -80,7 +80,7 @@ public class AppUserControllerTest {
                                 "joe@mail.com", null, "Joe", "Password1!"))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("joe@mail.com"))
-                .andExpect(jsonPath("$.role").value("CUSTOMER"));
+                .andExpect(jsonPath("$.roles[0]").value("CUSTOMER"));
     }
 
     @Test void registerByPhone() throws Exception {
@@ -92,7 +92,7 @@ public class AppUserControllerTest {
                                 null, "+38268754722", "Ann", "Password1!"))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.phone").value("+38268754722"))
-                .andExpect(jsonPath("$.role").value("CUSTOMER"));
+                .andExpect(jsonPath("$.roles[0]").value("CUSTOMER"));
     }
 
     // ── FAILURES ──────────────────────────────────────────────────────────────

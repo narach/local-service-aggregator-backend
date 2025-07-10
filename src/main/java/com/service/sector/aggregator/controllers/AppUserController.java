@@ -28,6 +28,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * REST controller for user registration.
@@ -70,6 +73,8 @@ public class AppUserController {
         Role customerRole = roleRepo.findByRoleName(RoleName.CUSTOMER)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                 "Role not seeded in DB"));
+        Set<Role> userRoles = new HashSet<>();
+        userRoles.add(customerRole);
 
         /* 3. build & persist user */
         AppUser user = AppUser.builder()
@@ -77,7 +82,7 @@ public class AppUserController {
                 .phone(req.phone())
                 .realName(req.realName())
                 .password(encoder.encode(req.password()))
-                .role(customerRole)
+                .roles(userRoles)
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now())
                 .build();
@@ -90,7 +95,9 @@ public class AppUserController {
                 saved.getEmail(),
                 saved.getPhone(),
                 saved.getRealName(),
-                saved.getRole().getRoleName().name(),
+                saved.getRoles().stream()
+                        .map(r -> r.getRoleName().name())
+                        .collect(Collectors.toSet()),
                 saved.getCreatedAt());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);

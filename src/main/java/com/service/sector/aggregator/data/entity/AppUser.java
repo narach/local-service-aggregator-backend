@@ -1,5 +1,7 @@
 package com.service.sector.aggregator.data.entity;
 
+import com.service.sector.aggregator.data.enums.RoleName;
+import com.service.sector.aggregator.data.enums.RoleRequestStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -62,7 +64,30 @@ public class AppUser {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "role_id")
-    private Role role;
+    /** Many-to-many through table app_user_role */
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.EAGER)                // EAGER because roles are tiny
+    @JoinTable(
+            name = "app_user_role",
+            joinColumns        = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private java.util.Set<Role> roles = new java.util.HashSet<>();
+
+    // NEW helper methods -------------------------------------------------------
+    public boolean hasRole(RoleName rn) {
+        return roles.stream().anyMatch(r -> r.getRoleName() == rn);
+    }
+
+    public void addRole(Role r) { roles.add(r); }
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "master_role_status", nullable = false, length = 20)
+    @Builder.Default
+    private RoleRequestStatus masterRoleStatus = RoleRequestStatus.NO;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "landlord_role_status", nullable = false, length = 20)
+    @Builder.Default
+    private RoleRequestStatus landlordRoleStatus = RoleRequestStatus.NO;
 }
