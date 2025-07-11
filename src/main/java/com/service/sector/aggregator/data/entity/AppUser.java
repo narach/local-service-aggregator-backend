@@ -1,5 +1,6 @@
 package com.service.sector.aggregator.data.entity;
 
+import com.service.sector.aggregator.data.enums.ActivationStatus;
 import com.service.sector.aggregator.data.enums.RoleName;
 import com.service.sector.aggregator.data.enums.RoleRequestStatus;
 import jakarta.persistence.*;
@@ -49,18 +50,22 @@ public class AppUser {
     @Column(name = "real_name", nullable = false, length = 255)
     private String realName;
 
-    /**
-     * Stored as hash (BCrypt, etc.).
-     * Regex enforces ≥6 chars, 1 lowercase, 1 uppercase, 1 digit.
-     */
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{6,}$",
-            message = "Password must be ≥6 chars and include lowercase, uppercase, number")
-    @Column(nullable = false)
+    @Column
     private String password;
 
+    @Column(name = "activation_code")          // null == activated (legacy users)
+    private String activationCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "activation_status", nullable = false, length = 10)
+    @Builder.Default
+    private ActivationStatus activationStatus = ActivationStatus.PENDING;
+
+    @Builder.Default                                            // ← add
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
+    @Builder.Default                                            // ← add
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 

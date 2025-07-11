@@ -1,0 +1,29 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20250716-activation
+      author: chatgpt
+      changes:
+        # 1. New column for one-time codes
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: activation_code
+                  type: VARCHAR(10)
+
+        # 2. Make password nullable (keep data for legacy rows)
+        - dropNotNullConstraint:
+            tableName: app_user
+            columnName: password
+            columnDataType: VARCHAR(255)
+
+      rollback:
+        - dropColumn:
+            tableName: app_user
+            columns:
+              - column: { name: activation_code }
+        - addNotNullConstraint:
+            tableName: app_user
+            columnName: password
+            columnDataType: VARCHAR(255)

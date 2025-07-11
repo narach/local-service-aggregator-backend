@@ -1,6 +1,7 @@
 package com.service.sector.aggregator.data.dto;
 
 import com.service.sector.aggregator.data.entity.Role;
+import com.service.sector.aggregator.data.enums.ActivationStatus;
 
 import java.time.OffsetDateTime;
 import java.util.Set;
@@ -11,9 +12,8 @@ import java.util.Set;
  */
 public record AppUserResponse(
         Long id,
-        String email,
         String phone,
-        String realName,
-        Set<String> roles, // enum name
+        ActivationStatus activationStatus,
+        java.util.Set<String> roles,
         OffsetDateTime createdAt
 ) {}

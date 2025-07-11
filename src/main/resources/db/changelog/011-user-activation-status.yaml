@@ -1,0 +1,20 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20250717-add-activation-status
+      author: chatgpt
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: activation_status
+                  type: VARCHAR(10)
+                  defaultValue: PENDING        # every existing user starts pending
+                  constraints: { nullable: false }
+
+      rollback:
+        - dropColumn:
+            tableName: app_user
+            columns:
+              - column: { name: activation_status }
