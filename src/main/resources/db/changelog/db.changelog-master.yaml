@@ -6,4 +6,8 @@ databaseChangeLog:
   - include: { file: db/changelog/005-update-user.yaml }
   - include: { file: db/changelog/006-update-workspace-status-type.yaml }
   - include: { file: db/changelog/007-add-roles.yaml }
-
+  - include: { file: db/changelog/008-user-role-status.yaml }
+  - include: { file: db/changelog/009-user-role-many-to-many.yaml }
+  - include: { file: db/changelog/010-user-activation.yaml }
+  - include: { file: db/changelog/011-user-activation-status.yaml }
+  - include: { file: db/changelog/012-fix-role-status-types.yaml }

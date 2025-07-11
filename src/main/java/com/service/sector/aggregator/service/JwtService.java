@@ -17,16 +17,15 @@ public class JwtService {
     @Value("${security.jwt.secret:dev-secret-key}")
     private String secret;
 
-    @Value("${security.jwt.expires-minutes:120}")
-    private long expiresMinutes;
+    @Value("${security.jwt.expires-hours:72}")
+    private long expiresHours;
 
-    public String generateToken(Long userId, String subject) {
+    public String generateToken(Long userId) {
         Instant now = Instant.now();
         return JWT.create()
-                .withSubject(subject)
                 .withClaim("uid", userId)
                 .withIssuedAt(Date.from(now))
-                .withExpiresAt(Date.from(now.plusSeconds(expiresMinutes * 60)))
+                .withExpiresAt(Date.from(now.plusSeconds(expiresHours * 3600)))
                 .sign(Algorithm.HMAC256(secret));
     }
 

@@ -1,0 +1,55 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20250718-role-status-to-varchar
+      author: chatgpt
+      changes:
+        # 1. Convert both columns to VARCHAR(20)
+        - modifyDataType:
+            tableName: app_user
+            columnName: master_role_status
+            newDataType: VARCHAR(20)
+
+        - modifyDataType:
+            tableName: app_user
+            columnName: landlord_role_status
+            newDataType: VARCHAR(20)
+
+        # 2. Update existing boolean values -> 'NO'
+        - sql:
+            sql: |
+              UPDATE app_user
+                 SET master_role_status   = 'NO'
+               WHERE master_role_status IN ('false', 'FALSE');
+        - sql:
+            sql: |
+              UPDATE app_user
+                 SET landlord_role_status = 'NO'
+               WHERE landlord_role_status IN ('false', 'FALSE');
+
+        # 3. Ensure NOT NULL + default 'NO'
+        - addNotNullConstraint:
+            tableName: app_user
+            columnName: master_role_status
+        - addNotNullConstraint:
+            tableName: app_user
+            columnName: landlord_role_status
+        - addDefaultValue:
+            tableName: app_user
+            columnName: master_role_status
+            defaultValue: NO
+        - addDefaultValue:
+            tableName: app_user
+            columnName: landlord_role_status
+            defaultValue: NO
+
+      rollback:
+        # just revert to boolean (rarely needed)
+        - modifyDataType:
+            tableName: app_user
+            columnName: master_role_status
+            newDataType: BOOLEAN
+        - modifyDataType:
+            tableName: app_user
+            columnName: landlord_role_status
+            newDataType: BOOLEAN

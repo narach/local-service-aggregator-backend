@@ -1,0 +1,28 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 20250714-add-role-statuses
+      author: chatgpt
+      changes:
+        # two new status columns, simple VARCHAR, default "NO"
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: master_role_status
+                  type: VARCHAR(20)
+                  defaultValue: NO
+                  constraints: { nullable: false }
+
+              - column:
+                  name: landlord_role_status
+                  type: VARCHAR(20)
+                  defaultValue: NO
+                  constraints: { nullable: false }
+
+      rollback:
+        - dropColumn:
+            tableName: app_user
+            columns:
+              - column: { name: master_role_status }
+              - column: { name: landlord_role_status }
