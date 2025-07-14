@@ -5,9 +5,12 @@ import com.service.sector.aggregator.data.dto.AppUserResponse;
 import com.service.sector.aggregator.data.dto.ApproveStatusChangeRequest;
 import com.service.sector.aggregator.data.dto.UserStatusChanged;
 import com.service.sector.aggregator.data.entity.AppUser;
+import com.service.sector.aggregator.data.entity.Workspace;
 import com.service.sector.aggregator.data.enums.RoleName;
 import com.service.sector.aggregator.data.enums.RoleRequestStatus;
+import com.service.sector.aggregator.data.enums.WorkspaceStatus;
 import com.service.sector.aggregator.data.repositories.AppUserRepository;
+import com.service.sector.aggregator.data.repositories.WorkspaceRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -34,6 +37,7 @@ import java.util.List;
 public class AdminController {
 
     private final AppUserRepository userRepo;
+    private final WorkspaceRepository workspaceRepo;
 
     /**
      * GET /api/admin/landlords – list users whose house owner role is waiting approval.
@@ -64,6 +68,11 @@ public class AdminController {
         RoleRequestStatus newStatus = RoleRequestStatus.APPROVED;
         user.setLandlordRoleStatus(newStatus);
         userRepo.save(user);
+
+        // Approve user's workspace(s)
+        List<Workspace> userWorkspaces = workspaceRepo.findAllByOwner(user);
+        userWorkspaces.forEach( workspace -> workspace.setStatus(WorkspaceStatus.APPROVED));
+        workspaceRepo.saveAll(userWorkspaces);
 
         return ResponseEntity.ok(new UserStatusChanged(user.getId(), RoleName.LANDLORD, oldStatus, newStatus));
     }
