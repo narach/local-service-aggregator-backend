@@ -136,7 +136,7 @@ public class AppUserControllerTest {
 //            mvc.perform(post("/api/users/activate")
 //                            .contentType(MediaType.APPLICATION_JSON)
 //                            .content(json(new ActivationRequest(phone, "654321"))))
-//                    .andExpect(status().isNoContent());
+//                    .andExpect(workspaceStatus().isNoContent());
 //        }
 //    }
 }

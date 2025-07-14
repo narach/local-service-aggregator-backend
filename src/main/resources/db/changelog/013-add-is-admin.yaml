@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20250719-is-admin
+      author: chatgpt
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: is_admin
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints: { nullable: false }
+      rollback:
+        - dropColumn:
+            tableName: app_user
+            columns:
+              - column: { name: is_admin }
