@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -16,21 +17,23 @@ import java.util.List;
 /**
  * Workspace‑related admin operations.
  */
-@Tag(name = "Admin • Workspaces", description = "Landlord approval operations")
+@Tag(name = "Admin • Workspaces", description = "Operations require admin role")
 @RestController
-@RequestMapping("/api/admin/landlords")
+@RequestMapping("/api/admin")
 @RequiredArgsConstructor
-public class LandlordApprovalController {
+public class AdminController {
 
     private final AppUserRepository userRepo;
 
     /**
-     * GET /api/admin/landlords/pending – list users whose landlord role is waiting approval.
+     * GET /api/admin/landlords – list users whose house owner role is waiting approval.
      */
-    @Operation(summary = "List landlord requests awaiting approval")
-    @GetMapping("/pending")
-    public ResponseEntity<List<AppUser>> listPendingLandlords() {
-        List<AppUser> pending = userRepo.findByLandlordRoleStatus(RoleRequestStatus.WAITING_APPROVAL);
+    @Operation(summary = "List landlords")
+    @GetMapping("/landlords")
+    public ResponseEntity<List<AppUser>> listPendingLandlords(
+            @RequestParam RoleRequestStatus roleRequestStatus
+    ) {
+        List<AppUser> pending = userRepo.findByLandlordRoleStatus(roleRequestStatus);
         return ResponseEntity.ok(pending);
     }
 }
