@@ -1,8 +1,10 @@
 package com.service.sector.aggregator.controllers;
 
+import com.service.sector.aggregator.data.dto.BecomeLandlordResponse;
 import com.service.sector.aggregator.data.dto.WorkspaceResponse;
 import com.service.sector.aggregator.data.entity.*;
-import com.service.sector.aggregator.data.enums.Status;
+import com.service.sector.aggregator.data.enums.RoleRequestStatus;
+import com.service.sector.aggregator.data.enums.WorkspaceStatus;
 import com.service.sector.aggregator.data.form.WorkspaceForm;
 import com.service.sector.aggregator.data.repositories.AppUserRepository;
 import com.service.sector.aggregator.data.repositories.WorkspaceRepository;
@@ -34,9 +36,9 @@ import java.util.*;
 /**
  * Workspace CRUD endpoints.
  */
-@Tag(name = "Workspaces", description = "Workspace registration and management")
+@Tag(name = "Landlord", description = "Landlord functionality")
 @RestController
-@RequestMapping("/workspace")
+@RequestMapping("/landlord")
 @RequiredArgsConstructor
 public class WorkspaceController {
 
@@ -47,28 +49,73 @@ public class WorkspaceController {
     private final AppUserRepository userRepo;
     private final WorkspaceRepository workspaceRepo;
 
+    @Operation(summary = "Request to become a landlord")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Request created",
+                    content = @Content(schema = @Schema(implementation = WorkspaceResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Validation error", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    })
+    @PostMapping(value = "/request-landlord", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Transactional
+    public ResponseEntity<BecomeLandlordResponse> requestLandlord(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String auth,
+            @Valid WorkspaceForm form,
+            @RequestPart("photos") List<MultipartFile> photos) throws IOException {
+
+        // 1. Update workspace owner status to waiting approval == request to become a workspace owner
+        Long uid = jwt.extractUserId(auth);
+        AppUser user = userRepo.findById(uid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        user.setLandlordRoleStatus(RoleRequestStatus.WAITING_APPROVAL);
+        userRepo.save(user);
+
+        // 2. Process first workspace data uploading
+        Workspace ws = createWorkspace(user, form, photos);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new BecomeLandlordResponse(user.getId(), user.getRealName(), user.getLandlordRoleStatus(),
+                        new WorkspaceResponse(ws.getId(), ws.getName(), ws.getCity(),
+                            ws.getPhotos().stream().map(WorkspacePhoto::getFilePath).toList())));
+    }
+
+
     @Operation(summary = "Register new workspace")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Workspace created",
                     content = @Content(schema = @Schema(implementation = WorkspaceResponse.class))),
             @ApiResponse(responseCode = "400", description = "Validation error", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     })
-    @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/add-workspace", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     public ResponseEntity<WorkspaceResponse> create(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String auth,
             @Valid WorkspaceForm form,
             @RequestPart("photos") List<MultipartFile> photos) throws IOException {
 
-        if (photos.size() < 3 || photos.size() > 15)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "3–15 photos required");
-
-        // 1. owner
+        // 1. Authenticated user
         Long uid = jwt.extractUserId(auth);
         AppUser owner = userRepo.findById(uid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
+        // 2. Check if user is an approved workspace owner.
+        if (owner.getLandlordRoleStatus() != RoleRequestStatus.APPROVED) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not approved as a landlord");
+        }
+
+        // 2. build Workspace
+        Workspace ws = createWorkspace(owner, form, photos);
+        // 3. if the user is an approved landlord- all his new workspaces are approved by default
+        ws.setStatus(WorkspaceStatus.APPROVED);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new WorkspaceResponse(ws.getId(), ws.getName(), ws.getCity(),
+                        ws.getPhotos().stream().map(WorkspacePhoto::getFilePath).toList()));
+    }
+
+
+    private Workspace createWorkspace(AppUser owner, WorkspaceForm form, List<MultipartFile> photos) throws IOException {
         // 2. build Workspace
         Workspace ws = Workspace.builder()
                 .owner(owner)
@@ -82,12 +129,22 @@ public class WorkspaceController {
                 .workingDaysMask(dtSrv.toMask(form.workingDays()))
                 .minRentMinutes(form.minRentMinutes())
                 .pricePerHour(form.pricePerHour())
-                .status(Status.UNDER_REVIEW)
+                .status(WorkspaceStatus.UNDER_REVIEW)
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now())
                 .build();
 
-        // 3. photos
+        ws.getPhotos().addAll(getWorkspacePhotos(photos, ws));
+
+        workspaceRepo.save(ws); // cascade will save photos
+        return ws;
+    }
+
+    // Process uploaded photos
+    private List<WorkspacePhoto> getWorkspacePhotos(List<MultipartFile> photos, Workspace ws) throws IOException {
+        if (photos.size() < 3 || photos.size() > 15)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "3–15 photos required");
+
         List<WorkspacePhoto> photoEntities = new ArrayList<>();
         for (int i = 0; i < photos.size(); i++) {
             MultipartFile mf = photos.get(i);
@@ -103,12 +160,8 @@ public class WorkspaceController {
                     .build();
             photoEntities.add(p);
         }
-        ws.getPhotos().addAll(photoEntities);
 
-        workspaceRepo.save(ws); // cascade will save photos
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new WorkspaceResponse(ws.getId(), ws.getName(), ws.getCity(), photoEntities.stream().map(WorkspacePhoto::getFilePath).toList()));
+        return photoEntities;
     }
 
 }

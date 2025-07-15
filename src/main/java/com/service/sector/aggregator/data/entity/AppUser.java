@@ -95,4 +95,8 @@ public class AppUser {
     @Column(name = "landlord_role_status", nullable = false, length = 20)
     @Builder.Default
     private RoleRequestStatus landlordRoleStatus = RoleRequestStatus.NO;
+
+    @Builder.Default
+    @Column(name = "is_admin", nullable = false)
+    private boolean isAdmin = false;
 }

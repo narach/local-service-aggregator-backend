@@ -1,6 +1,6 @@
 package com.service.sector.aggregator.data.entity;
 
-import com.service.sector.aggregator.data.enums.Status;
+import com.service.sector.aggregator.data.enums.WorkspaceStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -86,7 +86,7 @@ public class Workspace {
 
     @Enumerated(EnumType.STRING)          // still stores enum name as text
     @Column(length = 50)                 // optional, matches Liquibase change
-    private Status status = Status.DRAFT;
+    private WorkspaceStatus status = WorkspaceStatus.DRAFT;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
@@ -98,6 +98,6 @@ public class Workspace {
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     @OrderBy("order ASC")
-    @Builder.Default                 // <- Lombok initialises field when using @Builder
+    @Builder.Default                 // <- Lombok initializes field when using @Builder
     private List<WorkspacePhoto> photos = new ArrayList<>();
 }
