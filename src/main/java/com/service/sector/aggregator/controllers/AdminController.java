@@ -61,7 +61,7 @@ public class AdminController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     public ResponseEntity<UserStatusChanged> approveLandlordRequest(
-            @RequestBody @Valid ApproveStatusChangeRequest request) {
+            @RequestBody @Valid UserStatusChangeRequest request) {
         AppUser user = userRepo.findById(request.userId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         RoleRequestStatus oldStatus = user.getLandlordRoleStatus();
@@ -72,6 +72,32 @@ public class AdminController {
         // Approve user's workspace(s)
         List<Workspace> userWorkspaces = workspaceRepo.findAllByOwner(user);
         userWorkspaces.forEach( workspace -> workspace.setStatus(WorkspaceStatus.APPROVED));
+        workspaceRepo.saveAll(userWorkspaces);
+
+        return ResponseEntity.ok(new UserStatusChanged(user.getId(), RoleName.LANDLORD, oldStatus, newStatus));
+    }
+
+    @Operation(summary = "Reject landlord")
+    @PostMapping("/reject-landlord")
+    @Transactional
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Request Rejected"),
+            @ApiResponse(responseCode = "401", description = "No JWT security token in request"),
+            @ApiResponse(responseCode = "403", description = "No admin permissions to reject request"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<UserStatusChanged> rejectLandlordRequest(
+            @RequestBody @Valid UserStatusChangeRequest request) {
+        AppUser user = userRepo.findById(request.userId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        RoleRequestStatus oldStatus = user.getLandlordRoleStatus();
+        RoleRequestStatus newStatus = RoleRequestStatus.REJECTED;
+        user.setLandlordRoleStatus(newStatus);
+        userRepo.save(user);
+
+        // Approve user's workspace(s)
+        List<Workspace> userWorkspaces = workspaceRepo.findAllByOwner(user);
+        userWorkspaces.forEach( workspace -> workspace.setStatus(WorkspaceStatus.REJECTED));
         workspaceRepo.saveAll(userWorkspaces);
 
         return ResponseEntity.ok(new UserStatusChanged(user.getId(), RoleName.LANDLORD, oldStatus, newStatus));

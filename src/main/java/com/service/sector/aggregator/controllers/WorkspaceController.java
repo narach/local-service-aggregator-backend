@@ -106,6 +106,8 @@ public class WorkspaceController {
 
         // 2. build Workspace
         Workspace ws = createWorkspace(owner, form, photos);
+        // 3. if the user is an approved landlord- all his new workspaces are approved by default
+        ws.setStatus(WorkspaceStatus.APPROVED);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new WorkspaceResponse(ws.getId(), ws.getName(), ws.getCity(),
