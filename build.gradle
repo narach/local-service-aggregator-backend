@@ -39,9 +39,13 @@ dependencies {
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
 
 	implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:3.1.1')
-	/* correct starter (no “-config” suffix) */
+	/* correct starter (no "-config" suffix) */
 	implementation 'io.awspring.cloud:spring-cloud-aws-starter-parameter-store'
+	
+	// AWS SDK dependencies
+	implementation platform('software.amazon.awssdk:bom:2.25.0')
 	implementation 'software.amazon.awssdk:s3'
+	implementation 'software.amazon.awssdk:sns'
 
 	implementation 'net.coobird:thumbnailator:0.4.20'
 
