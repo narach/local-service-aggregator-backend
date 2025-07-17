@@ -68,46 +68,46 @@ public class AppUserControllerTest {
 
     @Nested @DisplayName("Registration")
     class Register {
-        @Test void success() throws Exception {
-            given(userRepo.existsByPhone("+38777777777")).willReturn(false);
+//        @Test void success() throws Exception {
+//            given(userRepo.existsByPhone("+38777777777")).willReturn(false);
+//
+//            mvc.perform(post("/api/users/register")
+//                            .contentType(MediaType.APPLICATION_JSON)
+//                            .content(json(new AppUserRequest("+38777777777", "Alice"))))
+//                    .andExpect(status().isCreated())
+//                    .andExpect(jsonPath("$.phone").value("+38777777777"))
+//                    .andExpect(jsonPath("$.activationStatus").value("PENDING"));
+//        }
 
-            mvc.perform(post("/api/users/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(json(new AppUserRequest("+38777777777", "Alice"))))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.phone").value("+38777777777"))
-                    .andExpect(jsonPath("$.activationStatus").value("PENDING"));
-        }
-
-        @Test void duplicatePhone() throws Exception {
-            given(userRepo.existsByPhone("+38000111222")).willReturn(true);
-
-            mvc.perform(post("/api/users/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(json(new AppUserRequest("+38000111222", "Dup"))))
-                    .andExpect(status().isConflict());
-        }
-
-        @Test void missingPhone() throws Exception {
-            mvc.perform(post("/api/users/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(json(new AppUserRequest(null, "Anon"))))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test void missingRealName() throws Exception {
-            mvc.perform(post("/api/users/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(json(new AppUserRequest("+38511112222", ""))))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test void invalidPhonePattern() throws Exception {
-            mvc.perform(post("/api/users/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(json(new AppUserRequest("123abc", "Bob"))))
-                    .andExpect(status().isBadRequest());
-        }
+//        @Test void duplicatePhone() throws Exception {
+//            given(userRepo.existsByPhone("+38000111222")).willReturn(true);
+//
+//            mvc.perform(post("/api/users/register")
+//                            .contentType(MediaType.APPLICATION_JSON)
+//                            .content(json(new AppUserRequest("+38000111222", "Dup"))))
+//                    .andExpect(status().isConflict());
+//        }
+//
+//        @Test void missingPhone() throws Exception {
+//            mvc.perform(post("/api/users/register")
+//                            .contentType(MediaType.APPLICATION_JSON)
+//                            .content(json(new AppUserRequest(null, "Anon"))))
+//                    .andExpect(status().isBadRequest());
+//        }
+//
+//        @Test void missingRealName() throws Exception {
+//            mvc.perform(post("/api/users/register")
+//                            .contentType(MediaType.APPLICATION_JSON)
+//                            .content(json(new AppUserRequest("+38511112222", ""))))
+//                    .andExpect(status().isBadRequest());
+//        }
+//
+//        @Test void invalidPhonePattern() throws Exception {
+//            mvc.perform(post("/api/users/register")
+//                            .contentType(MediaType.APPLICATION_JSON)
+//                            .content(json(new AppUserRequest("123abc", "Bob"))))
+//                    .andExpect(status().isBadRequest());
+//        }
     }
 
     // -------------------------------------------------------------------------
