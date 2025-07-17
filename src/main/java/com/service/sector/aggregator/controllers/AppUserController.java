@@ -11,21 +11,17 @@ import com.service.sector.aggregator.data.enums.ActivationStatus;
 import com.service.sector.aggregator.data.enums.RoleName;
 import com.service.sector.aggregator.data.repositories.AppUserRepository;
 import com.service.sector.aggregator.data.repositories.RoleRepository;
+import com.service.sector.aggregator.exceptions.InvalidPhoneNumberException;
+import com.service.sector.aggregator.exceptions.SmsDeliveryException;
 import com.service.sector.aggregator.service.JwtService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import com.service.sector.aggregator.service.SmsOtpService;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,25 +38,19 @@ public class AppUserController {
     private final AppUserRepository userRepo;
     private final RoleRepository roleRepo;
     private final JwtService jwtService;
-    private final PasswordEncoder encoder = new BCryptPasswordEncoder();
+    private final SmsOtpService smsOtpService;
 
-    @Operation(summary = "Register new user", description = "Creates a new AppUser with unique e‑mail or phone")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Created",
-                    content = @Content(schema = @Schema(implementation = AppUserResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Validation error"),
-            @ApiResponse(responseCode = "409", description = "Email or phone already registered")
-    })
     @PostMapping("/register")
     public ResponseEntity<AppUserResponse> register(
             @Valid @RequestBody AppUserRequest req) {
 
-        if (userRepo.existsByPhone(req.phone()))
+        if (userRepo.existsByPhone(req.phone())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Phone already registered");
+        }
 
         Role customerRole = roleRepo.findByRoleName(RoleName.CUSTOMER).orElseThrow();
 
-        String code = "123456";                           // TODO real SMS generator
+        String code = smsOtpService.newCode(req.phone());  // Generate a secure 6-digit code
         AppUser u = AppUser.builder()
                 .phone(req.phone())
                 .realName(req.realName())
@@ -70,17 +60,26 @@ public class AppUserController {
                 .build();
 
         userRepo.save(u);
-        // TODO send SMS(code) – deferred, currently DB only
 
-        /* 5. response */
+        // Only attempt to send SMS if it's not a test number
+        if (!SmsOtpService.isTestPhoneNumber(req.phone())) {
+            try {
+                smsOtpService.send(req.phone(), code);
+            } catch (InvalidPhoneNumberException | SmsDeliveryException e) {
+                userRepo.delete(u);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Failed to send verification code: " + e.getMessage());
+            }
+        }
+
         AppUserResponse resp = new AppUserResponse(
-                u.getId(),
-                u.getPhone(),
-                u.getActivationStatus(),
-                u.getRoles().stream()
-                        .map(r -> r.getRoleName().name())
-                        .collect(Collectors.toSet()),
-                u.getCreatedAt());
+            u.getId(),
+            u.getPhone(),
+            u.getActivationStatus(),
+            u.getRoles().stream()
+                    .map(r -> r.getRoleName().name())
+                    .collect(Collectors.toSet()),
+            u.getCreatedAt());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
@@ -95,13 +94,19 @@ public class AppUserController {
         if (code == null || code.isBlank())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Code is required");
 
-        if ("123456".equals(code) || code.equals(u.getActivationCode())) {
+        boolean isValid = code.equals(u.getActivationCode()) ||
+                (SmsOtpService.isTestPhoneNumber(u.getPhone()) &&
+                        code.equals(SmsOtpService.DEFAULT_TEST_CODE));
+
+        if (isValid) {
             u.setActivationStatus(ActivationStatus.ACTIVATED);
             u.setActivationCode(null);
             userRepo.save(u);
             return ResponseEntity.noContent().build();
         }
+
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong activation code");
+
     }
 
     // =====================================================================
