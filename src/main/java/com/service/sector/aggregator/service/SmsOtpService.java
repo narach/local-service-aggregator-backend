@@ -12,6 +12,9 @@ import java.util.Map;
 
 @Service
 public class SmsOtpService implements AutoCloseable {
+    public static final String TEST_PHONE_PREFIX = "+0";
+    public static final String DEFAULT_TEST_CODE = "123456";
+
     private final SnsClient sns;
     private final SecureRandom rnd = new SecureRandom();
     private final String topicArn;
@@ -31,8 +34,13 @@ public class SmsOtpService implements AutoCloseable {
     }
 
     /** Returns a zero-padded six–digit string, e.g. "034921". */
-    public String newCode() {
+    public String newCode(String phoneNumber
+    ) {
+        if (isTestPhoneNumber(phoneNumber)) {
+            return DEFAULT_TEST_CODE;
+        }
         return String.format("%0" + CODE_LENGTH + "d", rnd.nextInt(MAX_CODE));
+
     }
 
     /**
@@ -42,6 +50,11 @@ public class SmsOtpService implements AutoCloseable {
      */
     public void send(String phoneE164, String code) {
         validatePhoneNumber(phoneE164);
+
+        // Skip SMS sending for test numbers
+        if (isTestPhoneNumber(phoneE164)) {
+            return;
+        }
 
         try {
             // Publish directly to phone number
@@ -58,9 +71,17 @@ public class SmsOtpService implements AutoCloseable {
     }
 
     private void validatePhoneNumber(String phoneE164) {
-        if (phoneE164 == null || !phoneE164.matches("\\+[1-9]\\d{1,14}")) {
+        if (phoneE164 == null ||
+                (!isTestPhoneNumber(phoneE164) && !phoneE164.matches("\\+[1-9]\\d{1,14}"))) {
             throw new InvalidPhoneNumberException("Phone number must be in E.164 format: " + phoneE164);
         }
+    }
+
+    /**
+     * Checks if the phone number is a test number (starts with +0)
+     */
+    public static boolean isTestPhoneNumber(String phoneNumber) {
+        return phoneNumber != null && phoneNumber.startsWith(TEST_PHONE_PREFIX);
     }
 
     private String formatMessage(String code) {
