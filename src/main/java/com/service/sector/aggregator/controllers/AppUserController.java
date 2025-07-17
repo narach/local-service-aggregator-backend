@@ -5,124 +5,67 @@ import com.service.sector.aggregator.data.dto.AppUserRequest;
 import com.service.sector.aggregator.data.dto.AppUserResponse;
 import com.service.sector.aggregator.data.dto.auth.AuthResponse;
 import com.service.sector.aggregator.data.dto.auth.LoginRequest;
-import com.service.sector.aggregator.data.entity.AppUser;
-import com.service.sector.aggregator.data.entity.Role;
-import com.service.sector.aggregator.data.enums.ActivationStatus;
-import com.service.sector.aggregator.data.enums.RoleName;
-import com.service.sector.aggregator.data.repositories.AppUserRepository;
-import com.service.sector.aggregator.data.repositories.RoleRepository;
-import com.service.sector.aggregator.exceptions.InvalidPhoneNumberException;
-import com.service.sector.aggregator.exceptions.SmsDeliveryException;
-import com.service.sector.aggregator.service.JwtService;
+import com.service.sector.aggregator.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import com.service.sector.aggregator.service.SmsOtpService;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
-/**
- * REST controller for user registration.
- */
 @Tag(name = "Users", description = "Operations about application users")
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class AppUserController {
 
-    private final AppUserRepository userRepo;
-    private final RoleRepository roleRepo;
-    private final JwtService jwtService;
-    private final SmsOtpService smsOtpService;
+    private final UserService userService;
 
+    // ---------------------------------------------------------------------
+    // Registration
+    // ---------------------------------------------------------------------
+    @Operation(summary = "Register new user")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "User successfully registered"),
+            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
+            @ApiResponse(responseCode = "409", description = "Phone is already registered")
+    })
     @PostMapping("/register")
-    public ResponseEntity<AppUserResponse> register(
-            @Valid @RequestBody AppUserRequest req) {
-
-        if (userRepo.existsByPhone(req.phone())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Phone already registered");
-        }
-
-        Role customerRole = roleRepo.findByRoleName(RoleName.CUSTOMER).orElseThrow();
-
-        String code = smsOtpService.newCode(req.phone());  // Generate a secure 6-digit code
-        AppUser u = AppUser.builder()
-                .phone(req.phone())
-                .realName(req.realName())
-                .roles(Set.of(customerRole))
-                .activationCode(code)
-                .activationStatus(ActivationStatus.PENDING)
-                .build();
-
-        userRepo.save(u);
-
-        // Only attempt to send SMS if it's not a test number
-        if (!SmsOtpService.isTestPhoneNumber(req.phone())) {
-            try {
-                smsOtpService.send(req.phone(), code);
-            } catch (InvalidPhoneNumberException | SmsDeliveryException e) {
-                userRepo.delete(u);
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Failed to send verification code: " + e.getMessage());
-            }
-        }
-
-        AppUserResponse resp = new AppUserResponse(
-            u.getId(),
-            u.getPhone(),
-            u.getActivationStatus(),
-            u.getRoles().stream()
-                    .map(r -> r.getRoleName().name())
-                    .collect(Collectors.toSet()),
-            u.getCreatedAt());
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+    public ResponseEntity<AppUserResponse> register(@Valid @RequestBody AppUserRequest req) {
+        AppUserResponse response = userService.register(req);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // ---------------------------------------------------------------------
+    // Activation
+    // ---------------------------------------------------------------------
+    @Operation(summary = "Activate user with SMS code")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User activated"),
+            @ApiResponse(responseCode = "400", description = "Missing or wrong activation code"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @PostMapping("/activate")
-    public ResponseEntity<Void> activate(@RequestBody @Valid ActivationRequest req) {
-
-        AppUser u = userRepo.findByPhone(req.phone())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
-        String code = req.code();
-        if (code == null || code.isBlank())
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Code is required");
-
-        boolean isValid = code.equals(u.getActivationCode()) ||
-                (SmsOtpService.isTestPhoneNumber(u.getPhone()) &&
-                        code.equals(SmsOtpService.DEFAULT_TEST_CODE));
-
-        if (isValid) {
-            u.setActivationStatus(ActivationStatus.ACTIVATED);
-            u.setActivationCode(null);
-            userRepo.save(u);
-            return ResponseEntity.noContent().build();
-        }
-
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong activation code");
-
+    public ResponseEntity<Void> activate(@Valid @RequestBody ActivationRequest req) {
+        userService.activateUser(req);
+        return ResponseEntity.ok().build();
     }
 
-    // =====================================================================
+    // ---------------------------------------------------------------------
     // Authentication
-    // =====================================================================
+    // ---------------------------------------------------------------------
+    @Operation(summary = "User login")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Authentication successful"),
+            @ApiResponse(responseCode = "403", description = "User not activated"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-
-        AppUser user = userRepo.findByPhone(request.phone())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
-        if (user.getActivationStatus() != ActivationStatus.ACTIVATED) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User not activated");
-        }
-
-        String jwt = jwtService.generateToken(user.getId());
-        return ResponseEntity.ok(new AuthResponse(jwt));
+        AuthResponse response = userService.login(request);
+        return ResponseEntity.ok(response);
     }
 }
