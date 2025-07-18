@@ -13,6 +13,8 @@ import com.service.sector.aggregator.data.repositories.AppUserRepository;
 import com.service.sector.aggregator.data.repositories.RoleRepository;
 import com.service.sector.aggregator.exceptions.InvalidPhoneNumberException;
 import com.service.sector.aggregator.exceptions.SmsDeliveryException;
+import com.service.sector.aggregator.service.external.JwtService;
+import com.service.sector.aggregator.service.external.SmsOtpService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

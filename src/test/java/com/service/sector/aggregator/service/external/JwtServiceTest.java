@@ -1,4 +1,4 @@
-package com.service.sector.aggregator.service;
+package com.service.sector.aggregator.service.external;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;

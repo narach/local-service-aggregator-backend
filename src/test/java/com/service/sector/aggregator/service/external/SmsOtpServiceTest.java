@@ -1,4 +1,4 @@
-package com.service.sector.aggregator.service;
+package com.service.sector.aggregator.service.external;
 
 import com.service.sector.aggregator.exceptions.InvalidPhoneNumberException;
 import com.service.sector.aggregator.exceptions.SmsDeliveryException;

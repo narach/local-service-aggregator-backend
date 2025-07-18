@@ -1,4 +1,4 @@
-package com.service.sector.aggregator.service;
+package com.service.sector.aggregator.service.external;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

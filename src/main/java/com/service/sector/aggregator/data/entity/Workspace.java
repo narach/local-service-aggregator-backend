@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA‑spec compliant
+@NoArgsConstructor // JPA‑spec compliant
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(of = "id")

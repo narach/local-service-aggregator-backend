@@ -1,4 +1,4 @@
-package com.service.sector.aggregator.service;
+package com.service.sector.aggregator.service.external;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

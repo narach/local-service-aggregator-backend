@@ -1,4 +1,4 @@
-package com.service.sector.aggregator.service;
+package com.service.sector.aggregator.service.external;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

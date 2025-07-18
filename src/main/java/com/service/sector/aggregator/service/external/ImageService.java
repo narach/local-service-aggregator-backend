@@ -1,4 +1,4 @@
-package com.service.sector.aggregator.service;
+package com.service.sector.aggregator.service.external;
 
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.stereotype.Service;

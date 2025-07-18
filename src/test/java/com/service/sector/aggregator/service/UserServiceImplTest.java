@@ -11,6 +11,8 @@ import com.service.sector.aggregator.data.enums.ActivationStatus;
 import com.service.sector.aggregator.data.enums.RoleName;
 import com.service.sector.aggregator.data.repositories.AppUserRepository;
 import com.service.sector.aggregator.data.repositories.RoleRepository;
+import com.service.sector.aggregator.service.external.JwtService;
+import com.service.sector.aggregator.service.external.SmsOtpService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -32,8 +34,8 @@ class UserServiceImplTest {
 
     @Mock  private AppUserRepository userRepo;
     @Mock  private RoleRepository    roleRepo;
-    @Mock  private JwtService        jwtService;
-    @Mock  private SmsOtpService     smsOtpService;
+    @Mock  private JwtService jwtService;
+    @Mock  private SmsOtpService smsOtpService;
 
     @InjectMocks
     private UserServiceImpl service;     // concrete implementation under test
