@@ -1,4 +1,4 @@
-package com.service.sector.aggregator.service;
+package com.service.sector.aggregator.service.impl;
 
 import com.service.sector.aggregator.data.dto.ActivationRequest;
 import com.service.sector.aggregator.data.dto.AppUserRequest;
@@ -13,6 +13,7 @@ import com.service.sector.aggregator.data.repositories.AppUserRepository;
 import com.service.sector.aggregator.data.repositories.RoleRepository;
 import com.service.sector.aggregator.exceptions.InvalidPhoneNumberException;
 import com.service.sector.aggregator.exceptions.SmsDeliveryException;
+import com.service.sector.aggregator.service.UserService;
 import com.service.sector.aggregator.service.external.JwtService;
 import com.service.sector.aggregator.service.external.SmsOtpService;
 import jakarta.transaction.Transactional;

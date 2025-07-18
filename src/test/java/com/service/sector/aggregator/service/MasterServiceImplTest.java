@@ -3,6 +3,7 @@ package com.service.sector.aggregator.service;
 import com.service.sector.aggregator.data.dto.CreateMasterRequest;
 import com.service.sector.aggregator.data.entity.Master;
 import com.service.sector.aggregator.data.repositories.MasterRepository;
+import com.service.sector.aggregator.service.impl.MasterServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

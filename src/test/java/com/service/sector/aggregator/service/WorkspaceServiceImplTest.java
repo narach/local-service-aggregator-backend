@@ -14,6 +14,7 @@ import com.service.sector.aggregator.data.repositories.WorkspaceRepository;
 import com.service.sector.aggregator.service.external.DateTimeService;
 import com.service.sector.aggregator.service.external.ImageService;
 import com.service.sector.aggregator.service.external.S3Service;
+import com.service.sector.aggregator.service.impl.WorkspaceServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

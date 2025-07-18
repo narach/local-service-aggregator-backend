@@ -16,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/masters")
 @RequiredArgsConstructor
-public class MastersController {
+public class MasterController {
 
     private final MasterService masterService;
 

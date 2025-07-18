@@ -12,6 +12,7 @@ import com.service.sector.aggregator.data.enums.RoleRequestStatus;
 import com.service.sector.aggregator.data.enums.WorkspaceStatus;
 import com.service.sector.aggregator.data.repositories.AppUserRepository;
 import com.service.sector.aggregator.data.repositories.WorkspaceRepository;
+import com.service.sector.aggregator.service.impl.AdminServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

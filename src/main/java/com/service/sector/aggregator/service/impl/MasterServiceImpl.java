@@ -1,8 +1,9 @@
-package com.service.sector.aggregator.service;
+package com.service.sector.aggregator.service.impl;
 
 import com.service.sector.aggregator.data.dto.CreateMasterRequest;
 import com.service.sector.aggregator.data.entity.Master;
 import com.service.sector.aggregator.data.repositories.MasterRepository;
+import com.service.sector.aggregator.service.MasterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

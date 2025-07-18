@@ -1,4 +1,4 @@
-package com.service.sector.aggregator.service;
+package com.service.sector.aggregator.service.impl;
 
 import com.service.sector.aggregator.data.dto.BecomeLandlordResponse;
 import com.service.sector.aggregator.data.dto.WorkspaceResponse;
@@ -10,6 +10,7 @@ import com.service.sector.aggregator.data.enums.WorkspaceStatus;
 import com.service.sector.aggregator.data.form.WorkspaceForm;
 import com.service.sector.aggregator.data.repositories.AppUserRepository;
 import com.service.sector.aggregator.data.repositories.WorkspaceRepository;
+import com.service.sector.aggregator.service.WorkspaceService;
 import com.service.sector.aggregator.service.external.DateTimeService;
 import com.service.sector.aggregator.service.external.ImageService;
 import com.service.sector.aggregator.service.external.S3Service;

@@ -1,4 +1,4 @@
-package com.service.sector.aggregator.service;
+package com.service.sector.aggregator.service.impl;
 
 import com.service.sector.aggregator.data.dto.PendingLandlordDto;
 import com.service.sector.aggregator.data.dto.UserStatusChangeRequest;
@@ -12,6 +12,7 @@ import com.service.sector.aggregator.data.enums.RoleRequestStatus;
 import com.service.sector.aggregator.data.enums.WorkspaceStatus;
 import com.service.sector.aggregator.data.repositories.AppUserRepository;
 import com.service.sector.aggregator.data.repositories.WorkspaceRepository;
+import com.service.sector.aggregator.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

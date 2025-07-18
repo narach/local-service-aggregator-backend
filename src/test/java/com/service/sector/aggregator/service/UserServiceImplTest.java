@@ -13,6 +13,7 @@ import com.service.sector.aggregator.data.repositories.AppUserRepository;
 import com.service.sector.aggregator.data.repositories.RoleRepository;
 import com.service.sector.aggregator.service.external.JwtService;
 import com.service.sector.aggregator.service.external.SmsOtpService;
+import com.service.sector.aggregator.service.impl.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
