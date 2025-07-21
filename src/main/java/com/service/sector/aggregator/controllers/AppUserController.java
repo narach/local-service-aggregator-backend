@@ -1,6 +1,5 @@
 package com.service.sector.aggregator.controllers;
 
-import com.service.sector.aggregator.data.dto.ActivationRequest;
 import com.service.sector.aggregator.data.dto.AppUserRequest;
 import com.service.sector.aggregator.data.dto.AppUserResponse;
 import com.service.sector.aggregator.data.dto.PhoneRequest;

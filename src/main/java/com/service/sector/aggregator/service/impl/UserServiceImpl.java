@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import software.amazon.awssdk.utils.StringUtils;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,7 +53,12 @@ public class UserServiceImpl implements UserService {
                 .roles(Set.of(customerRole))
                 .build();
 
+        Optional<AuthCode> authCode = authCodeRepository.findByPhone(request.phone());
+
         userRepository.save(user);
+
+        // Cleanup auth code attempts
+        authCode.ifPresent(authCodeRepository::delete);
 
         return mapToResponse(user);
     }
