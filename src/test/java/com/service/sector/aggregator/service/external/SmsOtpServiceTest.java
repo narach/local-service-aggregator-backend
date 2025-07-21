@@ -32,7 +32,7 @@ class SmsOtpServiceTest {
     @BeforeEach
     void setUp() throws Exception {
         mocks = MockitoAnnotations.openMocks(this);
-        service = new SmsOtpService(Region.EU_NORTH_1, TOPIC_ARN);
+        service = new SmsOtpService(Region.EU_NORTH_1);
         // Inject the mock SnsClient (replace the internally created one)
         setFinalField(service, "sns", sns);
     }

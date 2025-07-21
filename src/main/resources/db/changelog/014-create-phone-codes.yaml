@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+        id: 014-create-phone-codes
+        author: Siarhei Naralenkau
+        changes:
+          - createTable:
+              tableName: auth_codes
+              columns:
+                - column:
+                    name: id
+                    type: BIGSERIAL
+                    constraints:
+                      primaryKey: true
+
+                - column:
+                    name: phone
+                    type: VARCHAR(17)
+                    constraints:
+                      nullable: false
+
+                - column:
+                    name: sms_code
+                    type: VARCHAR(6)
+
+
+        rollback:
+          - dropTable:
+              tableName: auth_codes

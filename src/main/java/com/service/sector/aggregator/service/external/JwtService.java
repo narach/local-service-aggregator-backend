@@ -1,10 +1,18 @@
 package com.service.sector.aggregator.service.external;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
+import com.service.sector.aggregator.data.entity.AppUser;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
+import java.security.Key;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
@@ -14,31 +22,42 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    @Value("${security.jwt.secret:dev-secret-key}")
+    @Value("${security.jwt.secret:devSecret}")
     private String secret;
 
-    @Value("${security.jwt.expires-hours:72}")
-    private long expiresHours;
+    private static final Duration DEFAULT_TTL = Duration.ofHours(72);
 
-    public String generateToken(Long userId) {
+    public String generateToken(AppUser user) {
         Instant now = Instant.now();
-        return JWT.create()
-                .withClaim("uid", userId)
-                .withIssuedAt(Date.from(now))
-                .withExpiresAt(Date.from(now.plusSeconds(expiresHours * 3600)))
-                .sign(Algorithm.HMAC256(secret));
+        Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+        String token = Jwts.builder()
+                .subject(user.getId().toString())
+                .claim("uid", user.getId())
+                .claim("phone", user.getPhone())
+                .claim("name", user.getRealName())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(DEFAULT_TTL)))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+
+        return token;
     }
 
     public Long parseUserId(String token) {
-        return JWT.require(Algorithm.HMAC256(secret))
-                .build()
-                .verify(token)
-                .getClaim("uid")
-                .asLong();
+        Jws<Claims> jws = getClaims(token);
+        Claims claims = jws.getPayload();
+        Long userId = Long.valueOf(claims.getSubject());
+        return userId;
     }
 
     public Long extractUserId(String bearerToken) {
         String token = bearerToken.replace("Bearer ", "");
         return parseUserId(token);
+    }
+
+    public Jws<Claims> getClaims(String bearerToken) {
+        String token = bearerToken.replace("Bearer ", "");
+        SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
     }
 }

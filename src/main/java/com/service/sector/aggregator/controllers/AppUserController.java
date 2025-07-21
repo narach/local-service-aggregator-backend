@@ -1,10 +1,12 @@
 package com.service.sector.aggregator.controllers;
 
-import com.service.sector.aggregator.data.dto.ActivationRequest;
 import com.service.sector.aggregator.data.dto.AppUserRequest;
 import com.service.sector.aggregator.data.dto.AppUserResponse;
+import com.service.sector.aggregator.data.dto.PhoneRequest;
 import com.service.sector.aggregator.data.dto.auth.AuthResponse;
 import com.service.sector.aggregator.data.dto.auth.LoginRequest;
+import com.service.sector.aggregator.exceptions.InvalidPhoneNumberException;
+import com.service.sector.aggregator.exceptions.SmsDeliveryException;
 import com.service.sector.aggregator.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,6 +27,26 @@ public class AppUserController {
     private final UserService userService;
 
     // ---------------------------------------------------------------------
+    // Check Phone
+    // ---------------------------------------------------------------------
+    @PostMapping("/request-code")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Phone is valid and SMS code is successfully sent"),
+            @ApiResponse(responseCode = "400", description = "Phone number is not in valid format"),
+            @ApiResponse(responseCode = "500", description = "SMS sending failure(Issue with AWS SNS"),
+    })
+    public ResponseEntity<String> requestCode(@Valid @RequestBody PhoneRequest req) {
+        try {
+            userService.sendCode(req.phone());
+        } catch (InvalidPhoneNumberException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (SmsDeliveryException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    // ---------------------------------------------------------------------
     // Registration
     // ---------------------------------------------------------------------
     @Operation(summary = "Register new user")
@@ -40,27 +62,12 @@ public class AppUserController {
     }
 
     // ---------------------------------------------------------------------
-    // Activation
-    // ---------------------------------------------------------------------
-    @Operation(summary = "Activate user with SMS code")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "User activated"),
-            @ApiResponse(responseCode = "400", description = "Missing or wrong activation code"),
-            @ApiResponse(responseCode = "404", description = "User not found")
-    })
-    @PostMapping("/activate")
-    public ResponseEntity<Void> activate(@Valid @RequestBody ActivationRequest req) {
-        userService.activateUser(req);
-        return ResponseEntity.ok().build();
-    }
-
-    // ---------------------------------------------------------------------
     // Authentication
     // ---------------------------------------------------------------------
     @Operation(summary = "User login")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Authentication successful"),
-            @ApiResponse(responseCode = "403", description = "User not activated"),
+            @ApiResponse(responseCode = "401", description = "Provided auth code doesn't match expected"),
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PostMapping("/login")
