@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2025-07-18-remove-activation-fields
+      author: ai-assistant
+      changes:
+        - dropColumn:
+            tableName: app_user
+            columnName: activation_code
+        - dropColumn:
+            tableName: app_user
+            columnName: activation_status
+      rollback:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: activation_code
+                  type: varchar(255)
+              - column:
+                  name: activation_status
+                  type: varchar(10)
+                  defaultValue: PENDING
+                  constraints:
+                    nullable: false

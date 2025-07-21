@@ -2,6 +2,7 @@ package com.service.sector.aggregator.service.external;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.service.sector.aggregator.data.entity.AppUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,14 +12,24 @@ import java.lang.reflect.Field;
 import static org.junit.jupiter.api.Assertions.*;
 
 class JwtServiceTest {
+    private final Long USER_ID = 42L;
+    private final String PHONE = "+15550000001";
 
     private JwtService service;
+
+    private AppUser user;
 
     @BeforeEach
     void setUp() throws Exception {
         service = new JwtService();
         setField(service, "secret", "test-secret");
-        setField(service, "expiresHours", 1L);          // 1 h validity for default tests
+        setField(service, "expiresHours", 1L);
+
+        user = AppUser.builder()
+                .id(USER_ID)
+                .phone(PHONE)
+                .realName("Doe Jons")
+                .build();// 1 h validity for default tests
     }
 
     /* ------------------------------------------------------------------
@@ -28,22 +39,19 @@ class JwtServiceTest {
     @Test
     @DisplayName("Generated token can be parsed back to the same user-id")
     void generateAndParse_roundTrip_success() {
-        long userId = 42L;
-
-        String token   = service.generateToken(userId);
+        String token   = service.generateToken(user);
         Long  parsedId = service.parseUserId(token);
 
-        assertEquals(userId, parsedId);
+        assertEquals(USER_ID, parsedId);
     }
 
     @Test
     @DisplayName("extractUserId removes the Bearer prefix correctly")
     void extractUserId_bearerPrefix_success() {
-        long userId = 99L;
-        String token   = service.generateToken(userId);
+        String token   = service.generateToken(user);
         String bearer  = "Bearer " + token;
 
-        assertEquals(userId, service.extractUserId(bearer));
+        assertEquals(USER_ID, service.extractUserId(bearer));
     }
 
     /* ------------------------------------------------------------------
@@ -58,7 +66,7 @@ class JwtServiceTest {
         setField(other, "secret", "other-secret");
         setField(other, "expiresHours", 1L);
 
-        String foreignToken = other.generateToken(1L);
+        String foreignToken = other.generateToken(user);
 
         assertThrows(JWTVerificationException.class,
                 () -> service.parseUserId(foreignToken));
@@ -68,7 +76,7 @@ class JwtServiceTest {
     @DisplayName("parseUserId throws TokenExpiredException for an expired token")
     void parseUserId_expiredToken_throws() throws Exception {
         setField(service, "expiresHours", -1L);          // already expired
-        String expiredToken = service.generateToken(5L);
+        String expiredToken = service.generateToken(user);
 
         assertThrows(TokenExpiredException.class,
                 () -> service.parseUserId(expiredToken));

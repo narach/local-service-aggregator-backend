@@ -2,6 +2,7 @@ package com.service.sector.aggregator.service.external;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.service.sector.aggregator.data.entity.AppUser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -20,10 +21,12 @@ public class JwtService {
     @Value("${security.jwt.expires-hours:72}")
     private long expiresHours;
 
-    public String generateToken(Long userId) {
+    public String generateToken(AppUser user) {
         Instant now = Instant.now();
         return JWT.create()
-                .withClaim("uid", userId)
+                .withClaim("uid", user.getId())
+                .withClaim("phone", user.getPhone())
+                .withClaim("name", user.getRealName())
                 .withIssuedAt(Date.from(now))
                 .withExpiresAt(Date.from(now.plusSeconds(expiresHours * 3600)))
                 .sign(Algorithm.HMAC256(secret));

@@ -17,20 +17,17 @@ public class SmsOtpService implements AutoCloseable {
 
     private final SnsClient sns;
     private final SecureRandom rnd = new SecureRandom();
-    private final String topicArn;
 
     private static final String SMS_TYPE_ATTRIBUTE = "AWS.SNS.SMS.SMSType";
     private static final int CODE_LENGTH = 6;
     private static final int MAX_CODE = 1_000_000;
 
     public SmsOtpService(
-            @Value("${aws.sns.region}") Region region,
-            @Value("${aws.sns.topic.verification-codes}") String topicArn
+            @Value("${aws.sns.region}") Region region
     ) {
         sns = SnsClient.builder()
                 .region(region)
                 .build();
-        this.topicArn = topicArn;
     }
 
     /** Returns a zero-padded six–digit string, e.g. "034921". */
@@ -40,7 +37,6 @@ public class SmsOtpService implements AutoCloseable {
             return DEFAULT_TEST_CODE;
         }
         return String.format("%0" + CODE_LENGTH + "d", rnd.nextInt(MAX_CODE));
-
     }
 
     /**

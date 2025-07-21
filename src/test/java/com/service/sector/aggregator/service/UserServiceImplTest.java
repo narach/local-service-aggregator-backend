@@ -1,18 +1,17 @@
 package com.service.sector.aggregator.service;
 
-import com.service.sector.aggregator.data.dto.ActivationRequest;
 import com.service.sector.aggregator.data.dto.AppUserRequest;
 import com.service.sector.aggregator.data.dto.AppUserResponse;
 import com.service.sector.aggregator.data.dto.auth.AuthResponse;
 import com.service.sector.aggregator.data.dto.auth.LoginRequest;
 import com.service.sector.aggregator.data.entity.AppUser;
+import com.service.sector.aggregator.data.entity.AuthCode;
 import com.service.sector.aggregator.data.entity.Role;
-import com.service.sector.aggregator.data.enums.ActivationStatus;
 import com.service.sector.aggregator.data.enums.RoleName;
 import com.service.sector.aggregator.data.repositories.AppUserRepository;
+import com.service.sector.aggregator.data.repositories.AuthCodeRepository;
 import com.service.sector.aggregator.data.repositories.RoleRepository;
 import com.service.sector.aggregator.service.external.JwtService;
-import com.service.sector.aggregator.service.external.SmsOtpService;
 import com.service.sector.aggregator.service.impl.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,16 +33,17 @@ import static org.mockito.Mockito.*;
 class UserServiceImplTest {
 
     @Mock  private AppUserRepository userRepo;
+    @Mock  private AuthCodeRepository authCodeRepository;
     @Mock  private RoleRepository    roleRepo;
     @Mock  private JwtService jwtService;
-    @Mock  private SmsOtpService smsOtpService;
 
     @InjectMocks
     private UserServiceImpl service;     // concrete implementation under test
 
     private final String PHONE = "+15550000001";
     private final String REAL_NAME = "John Doe";
-    private final String CODE  = "1234";
+    private final String CODE  = "123456";
+    private final String WRONG_CODE = "000000";
 
     @BeforeEach
     void setUp() {
@@ -58,7 +58,6 @@ class UserServiceImplTest {
         when(userRepo.existsByPhone(PHONE)).thenReturn(false);
         Role customerRole = Role.builder().roleName(RoleName.CUSTOMER).build();
         when(roleRepo.findByRoleName(RoleName.CUSTOMER)).thenReturn(Optional.of(customerRole));
-        when(smsOtpService.newCode(PHONE)).thenReturn(CODE);
         // repository returns the same entity (id not used in assertions here)
         when(userRepo.save(any(AppUser.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -66,8 +65,7 @@ class UserServiceImplTest {
         AppUserResponse resp = service.register(req);
 
         assertThat(resp.phone()).isEqualTo(PHONE);
-        assertThat(resp.activationStatus()).isEqualTo(ActivationStatus.PENDING);
-        verify(smsOtpService).send(eq(PHONE), eq(CODE));
+        assertThat(resp.realName()).isEqualTo(REAL_NAME);
     }
 
     @Test
@@ -83,43 +81,6 @@ class UserServiceImplTest {
     }
 
     // =========================================================================
-    // activateUser()
-    // =========================================================================
-    @Test
-    void activateUser_success() {
-        AppUser user = AppUser.builder()
-                .phone(PHONE)
-                .activationCode(CODE)
-                .activationStatus(ActivationStatus.PENDING)
-                .build();
-        when(userRepo.findByPhone(PHONE)).thenReturn(Optional.of(user));
-
-        ActivationRequest req = new ActivationRequest(PHONE, CODE);
-        service.activateUser(req);
-
-        assertThat(user.getActivationStatus()).isEqualTo(ActivationStatus.ACTIVATED);
-        assertThat(user.getActivationCode()).isNull();
-        verify(userRepo).save(user);
-    }
-
-    @Test
-    void activateUser_wrongCode_throws400() {
-        AppUser user = AppUser.builder()
-                .phone(PHONE)
-                .activationCode(CODE)
-                .activationStatus(ActivationStatus.PENDING)
-                .build();
-        when(userRepo.findByPhone(PHONE)).thenReturn(Optional.of(user));
-
-        ActivationRequest req = new ActivationRequest(PHONE, "0000");
-        ResponseStatusException ex =
-                assertThrows(ResponseStatusException.class, () -> service.activateUser(req));
-
-        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        verify(userRepo, never()).save(any());
-    }
-
-    // =========================================================================
     // login()
     // =========================================================================
     @Test
@@ -127,31 +88,36 @@ class UserServiceImplTest {
         AppUser user = AppUser.builder()
                 .id(1L)
                 .phone(PHONE)
-                .activationStatus(ActivationStatus.ACTIVATED)
+                .realName(REAL_NAME)
                 .roles(Set.of())
                 .build();
+        AuthCode authCode = AuthCode.builder().phone(PHONE).code(CODE).build();
         when(userRepo.findByPhone(PHONE)).thenReturn(Optional.of(user));
-        when(jwtService.generateToken(1L)).thenReturn("jwt-token");
+        when(authCodeRepository.findByPhone(PHONE)).thenReturn(Optional.of(authCode));
+        when(jwtService.generateToken(user)).thenReturn("jwt-token");
 
-        LoginRequest req = new LoginRequest(PHONE);
+        LoginRequest req = new LoginRequest(PHONE, CODE);
         AuthResponse resp = service.login(req);
 
         assertThat(resp.token()).isEqualTo("jwt-token");
     }
 
     @Test
-    void login_notActivated_throws403() {
+    void login_wrong_code_401() {
         AppUser user = AppUser.builder()
                 .phone(PHONE)
-                .activationStatus(ActivationStatus.PENDING)
+                .realName(REAL_NAME)
                 .build();
-        when(userRepo.findByPhone(PHONE)).thenReturn(Optional.of(user));
+        AuthCode authCode = AuthCode.builder().phone(PHONE).code(CODE).build();
 
-        LoginRequest req = new LoginRequest(PHONE);
+        when(userRepo.findByPhone(PHONE)).thenReturn(Optional.of(user));
+        when(authCodeRepository.findByPhone(PHONE)).thenReturn(Optional.of(authCode));
+
+        LoginRequest req = new LoginRequest(PHONE, WRONG_CODE);
         ResponseStatusException ex =
                 assertThrows(ResponseStatusException.class, () -> service.login(req));
 
-        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-        verify(jwtService, never()).generateToken(anyLong());
+        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        verify(jwtService, never()).generateToken(user);
     }
 }

@@ -9,7 +9,7 @@ import com.service.sector.aggregator.data.dto.auth.LoginRequest;
 public interface UserService {
     AppUserResponse register(AppUserRequest request);
 
-    void activateUser(ActivationRequest request);
-
     AuthResponse login(LoginRequest request);
+
+    void sendCode(String phone);
 }
