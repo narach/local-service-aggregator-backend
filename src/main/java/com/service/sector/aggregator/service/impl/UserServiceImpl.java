@@ -70,7 +70,7 @@ public class UserServiceImpl implements UserService {
         AppUser user = userRepository.findByPhone(request.phone())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         AuthCode authCode = authCodeRepository.findByPhone(request.phone())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
         // Check if provided authCode matches saved code
         if (StringUtils.equals(request.code(), authCode.getCode())) {
