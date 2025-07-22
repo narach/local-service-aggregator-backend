@@ -14,6 +14,8 @@ import com.service.sector.aggregator.data.repositories.RoleRepository;
 import com.service.sector.aggregator.service.UserService;
 import com.service.sector.aggregator.service.external.JwtService;
 import com.service.sector.aggregator.service.external.SmsOtpService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -90,6 +92,12 @@ public class UserServiceImpl implements UserService {
             code = DEFAULT_TEST_CODE;
         }
         authCodeRepository.save(AuthCode.builder().phone(phone).code(code).build());
+    }
+
+    @Override
+    public AppUser getUserDetails(String token) {
+        Long userId = jwtService.parseUserId(token);
+        return userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     private boolean isPhoneRegistered(String phone) {
