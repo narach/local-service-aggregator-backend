@@ -3,8 +3,6 @@ package com.service.sector.aggregator.controllers;
 import com.service.sector.aggregator.data.dto.AppUserRequest;
 import com.service.sector.aggregator.data.dto.AppUserResponse;
 import com.service.sector.aggregator.data.dto.PhoneRequest;
-import com.service.sector.aggregator.data.dto.UserDetailsRequest;
-import com.service.sector.aggregator.data.dto.auth.AuthResponse;
 import com.service.sector.aggregator.data.dto.auth.LoginRequest;
 import com.service.sector.aggregator.data.entity.AppUser;
 import com.service.sector.aggregator.exceptions.InvalidPhoneNumberException;
@@ -73,8 +71,8 @@ public class AppUserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        AuthResponse response = userService.login(request);
+    public ResponseEntity<AppUserResponse> login(@Valid @RequestBody LoginRequest request) {
+        AppUserResponse response = userService.login(request);
         return ResponseEntity.ok(response);
     }
 

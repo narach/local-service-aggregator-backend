@@ -2,7 +2,6 @@ package com.service.sector.aggregator.service;
 
 import com.service.sector.aggregator.data.dto.AppUserRequest;
 import com.service.sector.aggregator.data.dto.AppUserResponse;
-import com.service.sector.aggregator.data.dto.auth.AuthResponse;
 import com.service.sector.aggregator.data.dto.auth.LoginRequest;
 import com.service.sector.aggregator.data.entity.AppUser;
 import com.service.sector.aggregator.data.entity.AuthCode;
@@ -21,7 +20,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -104,7 +102,7 @@ class UserServiceImplTest {
         // token generation succeeds
         when(jwtService.generateToken(user)).thenReturn("dummy-jwt");
 
-        AuthResponse resp = service.login(new LoginRequest(PHONE, CODE));
+        AppUserResponse resp = service.login(new LoginRequest(PHONE, CODE));
 
         assertThat(resp.token()).isEqualTo("dummy-jwt");
         verify(authCodeRepository).deleteAllByPhone(PHONE);

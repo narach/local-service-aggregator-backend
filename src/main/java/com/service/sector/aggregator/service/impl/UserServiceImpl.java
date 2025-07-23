@@ -2,7 +2,6 @@ package com.service.sector.aggregator.service.impl;
 
 import com.service.sector.aggregator.data.dto.AppUserRequest;
 import com.service.sector.aggregator.data.dto.AppUserResponse;
-import com.service.sector.aggregator.data.dto.auth.AuthResponse;
 import com.service.sector.aggregator.data.dto.auth.LoginRequest;
 import com.service.sector.aggregator.data.entity.AppUser;
 import com.service.sector.aggregator.data.entity.AuthCode;
@@ -66,7 +65,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public AuthResponse login(LoginRequest request) {
+    public AppUserResponse login(LoginRequest request) {
         AppUser user = userRepository.findByPhone(request.phone())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No Such user"));
 
@@ -89,7 +88,7 @@ public class UserServiceImpl implements UserService {
         // cleanup: remove EVERY auth-code record for this phone
         authCodeRepository.deleteAllByPhone(request.phone());
 
-        return new AuthResponse(jwt);
+        return mapToResponse(user, jwt);
     }
 
     @Override
