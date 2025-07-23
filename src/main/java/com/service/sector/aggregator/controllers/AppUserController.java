@@ -85,8 +85,8 @@ public class AppUserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/{userId}")
-    public ResponseEntity<AppUser> userDetails(@PathVariable Long userId) {
-        AppUser user = userService.getUserDetails(userId);
-        return ResponseEntity.ok(user);
+    public ResponseEntity<AppUserResponse> userDetails(@PathVariable Long userId) {
+        AppUserResponse userDto = userService.getUserDetails(userId);
+        return ResponseEntity.ok(userDto);
     }
 }

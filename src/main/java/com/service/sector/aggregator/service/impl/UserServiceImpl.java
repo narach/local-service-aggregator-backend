@@ -105,8 +105,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public AppUser getUserDetails(Long userId) {
-        return userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    public AppUserResponse getUserDetails(Long userId) {
+        AppUser user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return mapToResponse(user, null);
     }
 
     private boolean isPhoneRegistered(String phone) {
