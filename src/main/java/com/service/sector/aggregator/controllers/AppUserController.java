@@ -69,7 +69,7 @@ public class AppUserController {
     @Operation(summary = "User login")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Authentication successful"),
-            @ApiResponse(responseCode = "401", description = "Provided auth code doesn't match expected"),
+            @ApiResponse(responseCode = "409", description = "Provided auth code doesn't match expected"),
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PostMapping("/login")
@@ -86,9 +86,9 @@ public class AppUserController {
             @ApiResponse(responseCode = "200", description = "User details retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "User not found")
     })
-    @PostMapping("/user-details")
-    public ResponseEntity<AppUser> userDetails(@Valid @RequestBody UserDetailsRequest request) {
-        AppUser user = userService.getUserDetails(request.token());
+    @GetMapping("/{userId}")
+    public ResponseEntity<AppUser> userDetails(@PathVariable Long userId) {
+        AppUser user = userService.getUserDetails(userId);
         return ResponseEntity.ok(user);
     }
 }

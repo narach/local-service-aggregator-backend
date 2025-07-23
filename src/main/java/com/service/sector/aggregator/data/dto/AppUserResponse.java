@@ -12,5 +12,6 @@ public record AppUserResponse(
         String phone,
         String realName,
         Set<String> roles,
-        OffsetDateTime createdAt
+        OffsetDateTime createdAt,
+        String token
 ) {}

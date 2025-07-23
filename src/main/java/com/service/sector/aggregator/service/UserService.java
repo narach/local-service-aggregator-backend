@@ -14,5 +14,5 @@ public interface UserService {
 
     void sendCode(String phone);
 
-    AppUser getUserDetails(String token);
+    AppUser getUserDetails(Long userId);
 }

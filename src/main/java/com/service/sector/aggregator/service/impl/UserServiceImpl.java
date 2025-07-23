@@ -14,8 +14,6 @@ import com.service.sector.aggregator.data.repositories.RoleRepository;
 import com.service.sector.aggregator.service.UserService;
 import com.service.sector.aggregator.service.external.JwtService;
 import com.service.sector.aggregator.service.external.SmsOtpService;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import software.amazon.awssdk.utils.StringUtils;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,25 +60,36 @@ public class UserServiceImpl implements UserService {
 
         // Cleanup auth code attempts
         authCode.ifPresent(authCodeRepository::delete);
+        String authToken = jwtService.generateToken(user);
 
-        return mapToResponse(user);
+        return mapToResponse(user, authToken);
     }
 
     @Override
     public AuthResponse login(LoginRequest request) {
         AppUser user = userRepository.findByPhone(request.phone())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        AuthCode authCode = authCodeRepository.findByPhone(request.phone())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No Such user"));
 
-        // Check if provided authCode matches saved code
-        if (StringUtils.equals(request.code(), authCode.getCode())) {
-            String jwt = jwtService.generateToken(user);
-            authCodeRepository.delete(authCode);
-            return new AuthResponse(jwt);
-        } else {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        List<AuthCode> codes = authCodeRepository.findAllByPhone(request.phone());
+
+        if (codes.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid auth code");
         }
+
+        boolean anyMatch = codes.stream()
+                .anyMatch(c -> StringUtils.equals(c.getCode(), request.code()));
+
+        if (!anyMatch) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid auth code");
+        }
+
+        // at least one code matches – issue token
+        String jwt = jwtService.generateToken(user);
+
+        // cleanup: remove EVERY auth-code record for this phone
+        authCodeRepository.deleteAllByPhone(request.phone());
+
+        return new AuthResponse(jwt);
     }
 
     @Override
@@ -91,12 +101,12 @@ public class UserServiceImpl implements UserService {
         } else {
             code = DEFAULT_TEST_CODE;
         }
+        authCodeRepository.deleteAllByPhone(phone);
         authCodeRepository.save(AuthCode.builder().phone(phone).code(code).build());
     }
 
     @Override
-    public AppUser getUserDetails(String token) {
-        Long userId = jwtService.parseUserId(token);
+    public AppUser getUserDetails(Long userId) {
         return userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
@@ -105,7 +115,7 @@ public class UserServiceImpl implements UserService {
     }
 
     // Other method implementations...
-    private AppUserResponse mapToResponse(AppUser user) {
+    private AppUserResponse mapToResponse(AppUser user, String authToken) {
         return new AppUserResponse(
                 user.getId(),
                 user.getPhone(),
@@ -113,6 +123,7 @@ public class UserServiceImpl implements UserService {
                 user.getRoles().stream()
                         .map(r -> r.getRoleName().name())
                         .collect(Collectors.toSet()),
-                user.getCreatedAt());
+                user.getCreatedAt(),
+                authToken);
     }
 }

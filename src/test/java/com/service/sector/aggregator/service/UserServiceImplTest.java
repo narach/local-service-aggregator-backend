@@ -19,6 +19,7 @@ import org.mockito.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -89,17 +90,24 @@ class UserServiceImplTest {
                 .id(1L)
                 .phone(PHONE)
                 .realName(REAL_NAME)
-                .roles(Set.of())
                 .build();
-        AuthCode authCode = AuthCode.builder().phone(PHONE).code(CODE).build();
+        // user exists
         when(userRepo.findByPhone(PHONE)).thenReturn(Optional.of(user));
-        when(authCodeRepository.findByPhone(PHONE)).thenReturn(Optional.of(authCode));
-        when(jwtService.generateToken(user)).thenReturn("jwt-token");
 
-        LoginRequest req = new LoginRequest(PHONE, CODE);
-        AuthResponse resp = service.login(req);
+        // matching verification-code record exists
+        AuthCode authCode = AuthCode.builder()
+                .phone(PHONE)
+                .code(CODE)
+                .build();
+        when(authCodeRepository.findAllByPhone(PHONE)).thenReturn(List.of(authCode));
 
-        assertThat(resp.token()).isEqualTo("jwt-token");
+        // token generation succeeds
+        when(jwtService.generateToken(user)).thenReturn("dummy-jwt");
+
+        AuthResponse resp = service.login(new LoginRequest(PHONE, CODE));
+
+        assertThat(resp.token()).isEqualTo("dummy-jwt");
+        verify(authCodeRepository).deleteAllByPhone(PHONE);
     }
 
     @Test

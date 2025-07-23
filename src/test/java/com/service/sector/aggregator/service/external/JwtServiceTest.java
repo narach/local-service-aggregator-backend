@@ -1,44 +1,45 @@
 package com.service.sector.aggregator.service.external;
 
+import com.service.sector.aggregator.config.JwtProperties;
 import com.service.sector.aggregator.data.entity.AppUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link JwtService}.
  *
- * The class is instantiated directly – Spring context is not required.
- * The private {@code secret} field is filled via reflection so that
- * we control the signing key during the test run.
+ * Spring context is NOT started; the service is instantiated directly
+ * with a hand-crafted {@link JwtProperties} instance.
  */
 class JwtServiceTest {
 
-    /** Base-64-encoded string  ‑->  "this-is-a-test-long-secret-of-32-bytes!!" (36 bytes). */
+    /** Base-64-encoded string  ‑-> "this-is-a-test-long-secret-of-32-bytes!!" */
     private static final String TEST_SECRET =
             "dGhpcy1pcy1hLXRlc3QtbG9uZy1zZWNyZXQtb2YtMzItYnl0ZXMhIQ==";
 
     private JwtService jwtService;
-
-    private AppUser user;
+    private AppUser    user;
 
     @BeforeEach
-    void setUp() throws Exception {
-        // Instantiate service & inject custom secret
-        jwtService = new JwtService();
-        Field secretField = JwtService.class.getDeclaredField("secret");
-        secretField.setAccessible(true);
-        secretField.set(jwtService, TEST_SECRET);
+    void setUp() {
+        // Prepare properties object
+        JwtProperties props = new JwtProperties();
+        props.setSecret(TEST_SECRET);
+        props.setTtl(Duration.ofHours(1));          // short TTL speeds up tests
+        props.setRefreshThreshold(Duration.ofMinutes(10));
+
+        jwtService = new JwtService(props);
 
         // dummy user entity
         user = AppUser.builder()
-                .id(42L)
-                .phone("+1234567890")
-                .realName("John Doe")
-                .build();
+                      .id(42L)
+                      .phone("+1234567890")
+                      .realName("John Doe")
+                      .build();
     }
 
     /* ---------------------------------------------------------------------- *
@@ -61,7 +62,7 @@ class JwtServiceTest {
 
     @Test
     void extractUserId_fromBearerPrefixedToken_returnsId() {
-        String token = jwtService.generateToken(user);
+        String token  = jwtService.generateToken(user);
         String bearer = "Bearer " + token;
 
         Long id = jwtService.extractUserId(bearer);
