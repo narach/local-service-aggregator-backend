@@ -14,3 +14,5 @@ databaseChangeLog:
   - include: { file: db/changelog/013-add-is-admin.yaml }
   - include: { file: db/changelog/014-create-phone-codes.yaml}
   - include: { file: db/changelog/015-drop-user-activation.yaml}
+  - include: { file: db/changelog/016-add-service-hierarchy.yaml}
+  - include: { file: db/changelog/017-fill-beauty-services.yaml}

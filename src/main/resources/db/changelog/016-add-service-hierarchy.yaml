@@ -1,0 +1,96 @@
+databaseChangeLog:
+  - changeSet:
+      id: 016-add-service-hierarchy
+      author: Siarhei Naralenkau
+      changes:
+        # 1) service_group
+        - createTable:
+            tableName: service_group
+            remarks: Stores the top-level grouping of services
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(1024)
+
+        # 2) service_category
+        - createTable:
+            tableName: service_category
+            remarks: Sub-group that belongs to a service_group
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: group_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(1024)
+
+        # 3) workspace_type
+        - createTable:
+            tableName: workspace_type
+            remarks: Leaf level that belongs to a service_category
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: category_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(1024)
+
+        # Foreign-key constraints
+        - addForeignKeyConstraint:
+            constraintName: fk_service_category_group
+            baseTableName: service_category
+            baseColumnNames: group_id
+            referencedTableName: service_group
+            referencedColumnNames: id
+            onDelete: CASCADE
+            onUpdate: RESTRICT
+
+        - addForeignKeyConstraint:
+            constraintName: fk_workspace_type_category
+            baseTableName: workspace_type
+            baseColumnNames: category_id
+            referencedTableName: service_category
+            referencedColumnNames: id
+            onDelete: CASCADE
+            onUpdate: RESTRICT
