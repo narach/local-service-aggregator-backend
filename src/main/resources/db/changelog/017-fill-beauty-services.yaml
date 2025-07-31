@@ -1,0 +1,48 @@
+databaseChangeLog:
+  - changeSet:
+      id: fill-beauty-services
+      author: Siarhei Naralenkau
+      changes:
+        - insert:
+            tableName: service_group
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: "Красота"
+              - column:
+                  name: description
+                  value: "Красота"
+        - insert:
+            tableName: service_category
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: group_id
+                  valueNumeric: 1      # FK → service_group.id
+              - column:
+                  name: name
+                  value: "Маникюр"
+              - column:
+                  name: description
+                  value: "Маникюр"
+        - insert:
+            tableName: workspace_type
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: category_id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: "Снятие и покрытие"
+              - column:
+                  name: description
+                  value: "Снятие и покрытие"
+
