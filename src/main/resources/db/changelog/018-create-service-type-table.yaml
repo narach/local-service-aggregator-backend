@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: 018-create-service-type-table
+      author: Siarhei Naralenkau
+      changes:
+
+        # 1. Create the table
+        - createTable:
+            tableName: service_type
+            remarks: "Catalogue of available service types"
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL          # auto-incrementing PK
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_service_type
+                    nullable: false
+
+              - column:
+                  name: category_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: VARCHAR(60)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: description
+                  type: VARCHAR(300)
+                  constraints:
+                    nullable: true
+
+        # 2. Add FK to service_category(id)
+        - addForeignKeyConstraint:
+            constraintName: fk_service_type_category
+            baseTableName: service_type
+            baseColumnNames: category_id
+            referencedTableName: service_category
+            referencedColumnNames: id
+            onDelete: CASCADE      # optional – remove or change if needed

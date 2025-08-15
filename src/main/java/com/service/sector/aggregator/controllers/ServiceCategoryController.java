@@ -3,10 +3,10 @@ package com.service.sector.aggregator.controllers;
 import com.service.sector.aggregator.data.dto.request.CreateServiceCategoryRequest;
 import com.service.sector.aggregator.data.dto.request.UpdateServiceCategoryRequest;
 import com.service.sector.aggregator.data.dto.response.ServiceCategoryResponse;
-import com.service.sector.aggregator.data.entity.ServiceCategory;
 import com.service.sector.aggregator.service.ServiceCategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +25,7 @@ public class ServiceCategoryController {
     private final ServiceCategoryService service;
 
     @Operation(summary = "List all service categories")
-    @GetMapping("/list")
+    @GetMapping
     public List<ServiceCategoryResponse> list() {
         return service.getAll();
     }
@@ -45,12 +45,13 @@ public class ServiceCategoryController {
 
     @Operation(summary = "Create a new service category")
     @PostMapping
-    public ResponseEntity<ServiceCategory> create(@RequestBody CreateServiceCategoryRequest req) {
-        ServiceCategory saved = service.create(req);
+    public ResponseEntity<ServiceCategoryResponse> create(@Valid @RequestBody CreateServiceCategoryRequest req) {
+        ServiceCategoryResponse saved = service.create(req)
+                .orElseThrow(() -> new IllegalStateException("Failed to create service category"));
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(saved.getId())
+                .buildAndExpand(saved.id())
                 .toUri();
 
         return ResponseEntity.created(location).body(saved);
@@ -63,11 +64,11 @@ public class ServiceCategoryController {
                     @ApiResponse(responseCode = "404", description = "Service category not found")
             })
     @PutMapping("/{id}")
-    public ResponseEntity<ServiceCategory> update(@PathVariable Long id,
-                                                  @RequestBody UpdateServiceCategoryRequest req) {
+    public ResponseEntity<ServiceCategoryResponse> update(@PathVariable Long id,
+                                                      @Valid @RequestBody UpdateServiceCategoryRequest req) {
         return service.update(id, req)
-                .map(ResponseEntity::ok)
-                .orElseGet(ResponseEntity.notFound()::build);
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @Operation(

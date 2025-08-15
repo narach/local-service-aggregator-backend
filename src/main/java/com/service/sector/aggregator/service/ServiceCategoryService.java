@@ -3,7 +3,7 @@ package com.service.sector.aggregator.service;
 import com.service.sector.aggregator.data.dto.request.CreateServiceCategoryRequest;
 import com.service.sector.aggregator.data.dto.request.UpdateServiceCategoryRequest;
 import com.service.sector.aggregator.data.dto.response.ServiceCategoryResponse;
-import com.service.sector.aggregator.data.dto.response.ServiceGroupDto;
+import com.service.sector.aggregator.data.dto.response.ServiceGroupResponse;
 import com.service.sector.aggregator.data.entity.ServiceCategory;
 import com.service.sector.aggregator.data.entity.ServiceGroup;
 import com.service.sector.aggregator.data.repositories.ServiceCategoryRepository;
@@ -30,7 +30,7 @@ public class ServiceCategoryService {
     public List<ServiceCategoryResponse> getAll() {
         return categoryRepo.findAllWithGroup().stream()
                 .map(c -> new ServiceCategoryResponse(
-                        c.getId(), c.getName(), c.getDescription(), new ServiceGroupDto(c.getGroup().getId(), c.getGroup().getName())))
+                        c.getId(), c.getName(), c.getDescription(), new ServiceGroupResponse(c.getGroup().getId(), c.getGroup().getName(), c.getDescription())))
                 .toList();
 
     }
@@ -38,25 +38,28 @@ public class ServiceCategoryService {
     public Optional<ServiceCategoryResponse> getById(Long id) {
         return categoryRepo.findByIdWithGroup(id)
                 .map(c -> new ServiceCategoryResponse(
-                        c.getId(), c.getName(), c.getDescription(), new ServiceGroupDto(c.getGroup().getId(), c.getGroup().getName())));
+                        c.getId(), c.getName(), c.getDescription(), new ServiceGroupResponse(c.getGroup().getId(), c.getGroup().getName(), c.getDescription())));
     }
 
     @Transactional
-    public ServiceCategory create(CreateServiceCategoryRequest req) {
+    public Optional<ServiceCategoryResponse> create(CreateServiceCategoryRequest req) {
         ServiceGroup group = groupRepo.findById(req.groupId())
                 .orElseThrow(() -> new IllegalArgumentException("ServiceGroup not found: " + req.groupId()));
 
-        ServiceCategory entity = ServiceCategory.builder()
+        ServiceCategory categoryEntity = ServiceCategory.builder()
                 .name(req.name())
                 .description(req.description())
                 .group(group)
                 .build();
 
-        return categoryRepo.save(entity);
+        categoryRepo.save(categoryEntity);
+        
+       return Optional.of(categoryEntity).map(c -> new ServiceCategoryResponse(
+                c.getId(), c.getName(), c.getDescription(), new ServiceGroupResponse(c.getGroup().getId(), c.getGroup().getName(), c.getDescription())));
     }
 
     @Transactional
-    public Optional<ServiceCategory> update(Long id, UpdateServiceCategoryRequest req) {
+    public Optional<ServiceCategoryResponse> update(Long id, UpdateServiceCategoryRequest req) {
         return categoryRepo.findById(id).map(entity -> {
             ServiceGroup group = groupRepo.findById(req.groupId())
                     .orElseThrow(() -> new IllegalArgumentException("ServiceGroup not found: " + req.groupId()));
@@ -64,7 +67,14 @@ public class ServiceCategoryService {
             entity.setName(req.name());
             entity.setDescription(req.description());
             entity.setGroup(group);
-            return entity; // JPA dirty checking will flush
+
+            // JPA dirty checking will persist changes on transaction commit
+            return new ServiceCategoryResponse(
+                    entity.getId(),
+                    entity.getName(),
+                    entity.getDescription(),
+                    new ServiceGroupResponse(entity.getGroup().getId(), entity.getGroup().getName(), entity.getDescription())
+            );
         });
     }
 

@@ -2,6 +2,7 @@ package com.service.sector.aggregator.service;
 
 import com.service.sector.aggregator.data.dto.request.CreateServiceGroupRequest;
 import com.service.sector.aggregator.data.dto.request.UpdateServiceGroupRequest;
+import com.service.sector.aggregator.data.dto.response.ServiceGroupResponse;
 import com.service.sector.aggregator.data.entity.ServiceGroup;
 import com.service.sector.aggregator.data.repositories.ServiceGroupRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,55 +25,58 @@ public class ServiceGroupService {
     /**
      * findAll – returns every service group.
      */
-    public List<ServiceGroup> getAllGroups() {
-        return repository.findAll();
+    public List<ServiceGroupResponse> getAllGroups() {
+        return repository.findAll().stream()
+                .map(g -> new ServiceGroupResponse(g.getId(), g.getName(), g.getDescription()))
+                .toList();
     }
 
     /**
      * findById – returns optional group by primary key.
      */
-    public Optional<ServiceGroup> getGroupById(Long id) {
-        return repository.findById(id);
+    public Optional<ServiceGroupResponse> getGroupById(Long id) {
+        return repository.findById(id)
+                .map(g -> new ServiceGroupResponse(g.getId(), g.getName(), g.getDescription()));
     }
 
     /**
      * addNew – persists a new service group.
      */
     @Transactional
-    public ServiceGroup createGroup(CreateServiceGroupRequest req) {
+    public ServiceGroupResponse createGroup(CreateServiceGroupRequest req) {
         ServiceGroup entity = ServiceGroup.builder()
                 .name(req.name())
                 .description(req.description())
                 .build();
-        return repository.save(entity);
+        ServiceGroup saved = repository.save(entity);
+        return new ServiceGroupResponse(saved.getId(), saved.getName(), saved.getDescription());
     }
 
     /**
      * update – changes name/description if the entity exists.
      *
-     * @return updated entity or {@code Optional.empty()} if not found
+     * @return updated DTO or {@code Optional.empty()} if not found
      */
     @Transactional
-    public Optional<ServiceGroup> updateGroup(Long id, UpdateServiceGroupRequest req) {
+    public Optional<ServiceGroupResponse> updateGroup(Long id, UpdateServiceGroupRequest req) {
         return repository.findById(id).map(entity -> {
             entity.setName(req.name());
             entity.setDescription(req.description());
-            return entity;                 // saved automatically by JPA dirty checking
+            return new ServiceGroupResponse(entity.getId(), entity.getName(), entity.getDescription());
         });
     }
 
     /**
-     * delete – removes the entity by primary key.
+     * delete – removes group by id.
      *
-     * @return {@code true} if deleted, {@code false} if not found
+     * @return true if a row was deleted
      */
     @Transactional
     public boolean deleteGroup(Long id) {
-        if (repository.existsById(id)) {
-            repository.deleteById(id);
-            return true;
+        if (!repository.existsById(id)) {
+            return false;
         }
-        return false;
+        repository.deleteById(id);
+        return true;
     }
-
 }

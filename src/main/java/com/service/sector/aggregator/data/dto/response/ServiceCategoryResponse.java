@@ -8,5 +8,5 @@ package com.service.sector.aggregator.data.dto.response;
  * @param description category description
  * @param group       owning ServiceGroup
  */
-public record ServiceCategoryResponse(Long id, String name, String description, ServiceGroupDto group) {
+public record ServiceCategoryResponse(Long id, String name, String description, ServiceGroupResponse group) {
 }
