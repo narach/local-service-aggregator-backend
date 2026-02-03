@@ -1,6 +1,5 @@
 package com.service.sector.aggregator.config;
 
-import com.service.sector.aggregator.filter.AdminJwtFilter;
 import com.service.sector.aggregator.filter.RefreshingJwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,16 +26,13 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     SecurityFilterChain adminChain(HttpSecurity http,
-                                   RefreshingJwtFilter refreshingJwtFilter,
-                                   AdminJwtFilter adminFilter) throws Exception {
+                                   RefreshingJwtFilter refreshingJwtFilter) throws Exception {
         http
                 .securityMatcher("/api/admin/**")
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().authenticated())
-                .addFilterBefore(refreshingJwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(adminFilter, RefreshingJwtFilter.class);
+                        .anyRequest().permitAll());
 
         return http.build();
     }
@@ -53,8 +49,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll())
-                .addFilterBefore(refreshingJwtFilter, UsernamePasswordAuthenticationFilter.class);
+                        .anyRequest().permitAll());
 
         return http.build();
     }
@@ -62,8 +57,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(
-                List.of("*://*.s3-website.eu-north-1.amazonaws.com", "http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of("*"));
+//        configuration.setAllowedOriginPatterns(
+//                List.of("*://*.s3-website.eu-north-1.amazonaws.com", "http://localhost:5173"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
