@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260331-user-first-last-name
+      author: chatgpt
+      changes:
+        - renameColumn:
+            tableName: app_user
+            oldColumnName: real_name
+            newColumnName: first_name
+            columnDataType: VARCHAR(255)
+
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: last_name
+                  type: VARCHAR(255)
+
+        - sql:
+            splitStatements: false
+            sql: |
+              UPDATE app_user
+              SET last_name = first_name
+              WHERE last_name IS NULL;
+
+        - addNotNullConstraint:
+            tableName: app_user
+            columnName: last_name
+            columnDataType: VARCHAR(255)
+
+      rollback:
+        - dropColumn:
+            tableName: app_user
+            columnName: last_name
+
+        - renameColumn:
+            tableName: app_user
+            oldColumnName: first_name
+            newColumnName: real_name
+            columnDataType: VARCHAR(255)

@@ -28,11 +28,14 @@ public class JwtService {
     public String generateToken(AppUser user) {
         Instant now = Instant.now();
         Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(props.getSecret()));
+        String fullName = (user.getFirstName() + " " + user.getLastName()).trim();
         String token = Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("uid", user.getId())
                 .claim("phone", user.getPhone())
-                .claim("name", user.getRealName())
+                .claim("name", fullName)
+                .claim("firstName", user.getFirstName())
+                .claim("lastName", user.getLastName())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(props.getTtl())))
                 .signWith(key, SignatureAlgorithm.HS256)

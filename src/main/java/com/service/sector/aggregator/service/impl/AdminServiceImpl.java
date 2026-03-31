@@ -74,7 +74,8 @@ public class AdminServiceImpl implements AdminService {
     private PendingLandlordDto mapLandlord(AppUser user) {
         List<WorkspaceSummaryDto> workspacesSummary = workspaceRepo.findAllByOwner(user).stream()
                 .map(this::toSummaryDto).toList();
-        return new PendingLandlordDto(user.getId(), user.getPhone(), user.getRealName(), workspacesSummary);
+        String fullName = (user.getFirstName() + " " + user.getLastName()).trim();
+        return new PendingLandlordDto(user.getId(), user.getPhone(), fullName, workspacesSummary);
     }
 
     private WorkspaceSummaryDto toSummaryDto(Workspace ws) {

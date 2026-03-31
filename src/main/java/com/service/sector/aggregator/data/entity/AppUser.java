@@ -14,8 +14,8 @@ import java.time.OffsetDateTime;
  * User entity.
  * <p>
  * Constraints:
- *  • Either <b>email</b> or <b>phone</b> must be present (checked at service/controller level).
- *  • Password must be at least 6 chars and contain at least one lower‑case letter, one upper‑case letter and one digit.
+ *  - Either <b>email</b> or <b>phone</b> must be present (checked at service/controller level).
+ *  - Password must be at least 6 chars and contain at least one lower-case letter, one upper-case letter and one digit.
  */
 @Getter
 @Setter
@@ -23,7 +23,7 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(of = "id")
-@ToString(of = {"id", "email", "phone", "realName"})
+@ToString(of = {"id", "email", "phone", "firstName", "lastName"})
 @Entity
 @Table(name = "app_user",
         uniqueConstraints = {
@@ -46,8 +46,12 @@ public class AppUser {
     private String phone;          // optional but unique
 
     @NotBlank
-    @Column(name = "real_name", nullable = false, length = 255)
-    private String realName;
+    @Column(name = "first_name", nullable = false, length = 255)
+    private String firstName;
+
+    @NotBlank
+    @Column(name = "last_name", nullable = false, length = 255)
+    private String lastName;
 
     @Column
     private String password;

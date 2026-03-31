@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260331-auth-code-valid-until
+      author: chatgpt
+      changes:
+        - addColumn:
+            tableName: auth_codes
+            columns:
+              - column:
+                  name: valid_until
+                  type: TIMESTAMPTZ
+
+        - sql:
+            splitStatements: false
+            sql: |
+              UPDATE auth_codes
+              SET valid_until = NOW() + INTERVAL '15 minutes'
+              WHERE valid_until IS NULL;
+
+        - addNotNullConstraint:
+            tableName: auth_codes
+            columnName: valid_until
+            columnDataType: TIMESTAMPTZ
+
+        - addDefaultValue:
+            tableName: auth_codes
+            columnName: valid_until
+            defaultValueComputed: NOW() + INTERVAL '15 minutes'
+
+      rollback:
+        - dropDefaultValue:
+            tableName: auth_codes
+            columnName: valid_until
+
+        - dropNotNullConstraint:
+            tableName: auth_codes
+            columnName: valid_until
+            columnDataType: TIMESTAMPTZ
+
+        - dropColumn:
+            tableName: auth_codes
+            columnName: valid_until

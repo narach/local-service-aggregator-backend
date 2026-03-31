@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.OffsetDateTime;
+
 @Schema(description = "Phone numbers and sent sms codes")
 @Entity
 @Table(name = "auth_codes")
@@ -28,5 +30,16 @@ public class AuthCode {
     @Schema(description = "Generated SMS auth code")
     @Column(name = "sms_code", length = 6)
     private String code;
+
+    @Schema(description = "Code expiration timestamp")
+    @Column(name = "valid_until", nullable = false)
+    private OffsetDateTime validUntil;
+
+    @PrePersist
+    void prePersist() {
+        if (validUntil == null) {
+            validUntil = OffsetDateTime.now().plusMinutes(15);
+        }
+    }
 }
 

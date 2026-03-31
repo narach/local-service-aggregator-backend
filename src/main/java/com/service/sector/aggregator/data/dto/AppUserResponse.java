@@ -10,7 +10,8 @@ import java.util.Set;
 public record AppUserResponse(
         Long id,
         String phone,
-        String realName,
+        String firstName,
+        String lastName,
         Set<String> roles,
         OffsetDateTime createdAt,
         String token

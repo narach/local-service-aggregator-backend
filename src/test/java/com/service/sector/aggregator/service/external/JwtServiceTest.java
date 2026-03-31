@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class JwtServiceTest {
 
-    /** Base-64-encoded string  ‑-> "this-is-a-test-long-secret-of-32-bytes!!" */
+    /** Base-64-encoded string  â€‘-> "this-is-a-test-long-secret-of-32-bytes!!" */
     private static final String TEST_SECRET =
             "dGhpcy1pcy1hLXRlc3QtbG9uZy1zZWNyZXQtb2YtMzItYnl0ZXMhIQ==";
 
@@ -38,7 +38,8 @@ class JwtServiceTest {
         user = AppUser.builder()
                       .id(42L)
                       .phone("+1234567890")
-                      .realName("John Doe")
+                       .firstName("John")
+                      .lastName("Doe")
                       .build();
     }
 
@@ -74,3 +75,4 @@ class JwtServiceTest {
      * getClaims()                                                            *
      * ---------------------------------------------------------------------- */
 }
+
