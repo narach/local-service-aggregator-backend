@@ -2,10 +2,12 @@ package com.service.sector.aggregator.service;
 
 import com.service.sector.aggregator.data.dto.AppUserRequest;
 import com.service.sector.aggregator.data.dto.AppUserResponse;
+import com.service.sector.aggregator.data.dto.UserDetailsResponse;
 import com.service.sector.aggregator.data.dto.auth.LoginRequest;
 import com.service.sector.aggregator.data.entity.AppUser;
 
 public interface UserService {
+    /** Register user from phone, firstName, and lastName payload. */
     AppUserResponse register(AppUserRequest request);
 
     AppUserResponse login(LoginRequest request);
@@ -13,4 +15,6 @@ public interface UserService {
     void sendCode(String phone);
 
     AppUserResponse getUserDetails(Long userId);
+
+    UserDetailsResponse getUserByPhone(String phone);
 }

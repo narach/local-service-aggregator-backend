@@ -54,7 +54,8 @@ class AdminServiceImplTest {
         testUser = new AppUser();
         testUser.setId(1L);
         testUser.setPhone("1234567890");
-        testUser.setRealName("Test User");
+        testUser.setFirstName("Test");
+        testUser.setLastName("User");
         testUser.setLandlordRoleStatus(RoleRequestStatus.WAITING_APPROVAL);
 
         // Set up test workspace

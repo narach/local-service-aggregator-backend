@@ -48,7 +48,8 @@ public class WorkspaceServiceImpl implements WorkspaceService {
 
             // 2. Process first workspace data uploading
             Workspace ws = createWorkspaceEntity(user, form, photos);
-            return new BecomeLandlordResponse(user.getId(), user.getRealName(), user.getLandlordRoleStatus(),
+            String fullName = (user.getFirstName() + " " + user.getLastName()).trim();
+            return new BecomeLandlordResponse(user.getId(), fullName, user.getLandlordRoleStatus(),
                     new WorkspaceResponse(ws.getId(), ws.getName(), ws.getCity(),
                             ws.getPhotos().stream().map(WorkspacePhoto::getFilePath).toList()));
         } catch (IOException e) {

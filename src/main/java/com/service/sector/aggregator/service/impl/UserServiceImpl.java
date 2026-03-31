@@ -2,6 +2,7 @@ package com.service.sector.aggregator.service.impl;
 
 import com.service.sector.aggregator.data.dto.AppUserRequest;
 import com.service.sector.aggregator.data.dto.AppUserResponse;
+import com.service.sector.aggregator.data.dto.UserDetailsResponse;
 import com.service.sector.aggregator.data.dto.auth.LoginRequest;
 import com.service.sector.aggregator.data.entity.AppUser;
 import com.service.sector.aggregator.data.entity.AuthCode;
@@ -21,15 +22,18 @@ import org.springframework.web.server.ResponseStatusException;
 import software.amazon.awssdk.utils.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.time.OffsetDateTime;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     public static final String DEFAULT_TEST_CODE = "123456";
+    public static final String REGISTRATION_INIT_CODE = "111111";
 
     private final AppUserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -44,21 +48,30 @@ public class UserServiceImpl implements UserService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Phone already registered");
         }
 
+        List<AuthCode> codes = authCodeRepository.findAllByPhone(request.phone());
+        OffsetDateTime now = OffsetDateTime.now();
+        boolean validSmsCode = codes.stream()
+                .anyMatch(c -> StringUtils.equals(c.getCode(), request.smsCode())
+                        && c.getValidUntil() != null
+                        && c.getValidUntil().isAfter(now));
+        if (!validSmsCode) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired smsCode");
+        }
+
         Role customerRole = roleRepository.findByRoleName(RoleName.CUSTOMER)
                 .orElseThrow(() -> new IllegalStateException("Customer role not found"));
 
         AppUser user = AppUser.builder()
                 .phone(request.phone())
-                .realName(request.realName())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
                 .roles(Set.of(customerRole))
                 .build();
-
-        Optional<AuthCode> authCode = authCodeRepository.findByPhone(request.phone());
 
         userRepository.save(user);
 
         // Cleanup auth code attempts
-        authCode.ifPresent(authCodeRepository::delete);
+        authCodeRepository.deleteAllByPhone(request.phone());
         String authToken = jwtService.generateToken(user);
 
         return mapToResponse(user, authToken);
@@ -70,23 +83,33 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No Such user"));
 
         List<AuthCode> codes = authCodeRepository.findAllByPhone(request.phone());
+        OffsetDateTime now = OffsetDateTime.now();
 
         if (codes.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid auth code");
         }
 
-        boolean anyMatch = codes.stream()
-                .anyMatch(c -> StringUtils.equals(c.getCode(), request.code()));
+        boolean anyValidMatch = codes.stream()
+                .anyMatch(c -> StringUtils.equals(c.getCode(), request.code())
+                        && c.getValidUntil() != null
+                        && c.getValidUntil().isAfter(now));
 
-        if (!anyMatch) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid auth code");
+        if (!anyValidMatch) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired auth code");
         }
 
-        // at least one code matches – issue token
+        // at least one code matches - issue token
         String jwt = jwtService.generateToken(user);
 
-        // cleanup: remove EVERY auth-code record for this phone
-        authCodeRepository.deleteAllByPhone(request.phone());
+        // cleanup: remove provided code records and all expired records for this phone
+        List<AuthCode> codesToDelete = codes.stream()
+                .filter(c -> StringUtils.equals(c.getCode(), request.code())
+                        || c.getValidUntil() == null
+                        || !c.getValidUntil().isAfter(now))
+                .toList();
+        if (!codesToDelete.isEmpty()) {
+            authCodeRepository.deleteAll(codesToDelete);
+        }
 
         return mapToResponse(user, jwt);
     }
@@ -105,6 +128,33 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(dontRollbackOn = ResponseStatusException.class)
+    public UserDetailsResponse getUserByPhone(String phone) {
+        if (Objects.isNull(phone) || phone.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Phone is required");
+        }
+
+        Optional<AppUser> maybeUser = userRepository.findByPhone(phone);
+        if (maybeUser.isEmpty()) {
+            authCodeRepository.deleteAllByPhone(phone);
+            authCodeRepository.save(AuthCode.builder().phone(phone).code(REGISTRATION_INIT_CODE).build());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No Such user");
+        }
+        AppUser user = maybeUser.get();
+
+        authCodeRepository.save(AuthCode.builder().phone(phone).code(DEFAULT_TEST_CODE).build());
+
+        return new UserDetailsResponse(
+                user.getPhone(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getRoles().stream()
+                        .map(r -> r.getRoleName().name())
+                        .collect(Collectors.toSet())
+        );
+    }
+
+    @Override
     public AppUserResponse getUserDetails(Long userId) {
         AppUser user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         return mapToResponse(user, null);
@@ -119,7 +169,8 @@ public class UserServiceImpl implements UserService {
         return new AppUserResponse(
                 user.getId(),
                 user.getPhone(),
-                user.getRealName(),
+                user.getFirstName(),
+                user.getLastName(),
                 user.getRoles().stream()
                         .map(r -> r.getRoleName().name())
                         .collect(Collectors.toSet()),

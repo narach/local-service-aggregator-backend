@@ -3,8 +3,8 @@ package com.service.sector.aggregator.controllers;
 import com.service.sector.aggregator.data.dto.AppUserRequest;
 import com.service.sector.aggregator.data.dto.AppUserResponse;
 import com.service.sector.aggregator.data.dto.PhoneRequest;
+import com.service.sector.aggregator.data.dto.UserDetailsResponse;
 import com.service.sector.aggregator.data.dto.auth.LoginRequest;
-import com.service.sector.aggregator.data.entity.AppUser;
 import com.service.sector.aggregator.exceptions.InvalidPhoneNumberException;
 import com.service.sector.aggregator.exceptions.SmsDeliveryException;
 import com.service.sector.aggregator.service.UserService;
@@ -13,15 +13,19 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Users", description = "Operations about application users")
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Validated
 public class AppUserController {
 
     private final UserService userService;
@@ -49,10 +53,10 @@ public class AppUserController {
     // ---------------------------------------------------------------------
     // Registration
     // ---------------------------------------------------------------------
-    @Operation(summary = "Register new user")
+    @Operation(summary = "Register new user with phone, firstName, and lastName")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "User successfully registered"),
-            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
+            @ApiResponse(responseCode = "400", description = "Invalid payload or invalid/expired smsCode"),
             @ApiResponse(responseCode = "409", description = "Phone is already registered")
     })
     @PostMapping("/register")
@@ -88,5 +92,20 @@ public class AppUserController {
     public ResponseEntity<AppUserResponse> userDetails(@PathVariable Long userId) {
         AppUserResponse userDto = userService.getUserDetails(userId);
         return ResponseEntity.ok(userDto);
+    }
+
+    @Operation(summary = "Get user by phone and generate fixed auth code")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User found, auth code created, and details returned"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    @GetMapping("/by-phone")
+    public ResponseEntity<UserDetailsResponse> getUserByPhone(
+            @RequestParam
+            @NotBlank
+            @Pattern(regexp = "^\\+?[0-9]{7,15}$", message = "Phone must contain 7-15 digits, optional leading +")
+            String phone) {
+        UserDetailsResponse response = userService.getUserByPhone(phone);
+        return ResponseEntity.ok(response);
     }
 }

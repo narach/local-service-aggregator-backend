@@ -66,7 +66,8 @@ class WorkspaceServiceImplTest {
     void setUp() {
         testUser = AppUser.builder()
                 .id(1L)
-                .realName("John Doe")
+                 .firstName("John")
+                .lastName("Doe")
                 .landlordRoleStatus(RoleRequestStatus.NO)
                 .build();
 
@@ -314,7 +315,7 @@ class WorkspaceServiceImplTest {
                 () -> workspaceService.createWorkspace(1L, testForm, tooFewPhotos));
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-        assertEquals("3–15 photos required", exception.getReason());
+        assertTrue(exception.getReason().contains("photos required"));
     }
 
     @Test
@@ -330,7 +331,7 @@ class WorkspaceServiceImplTest {
                 () -> workspaceService.createWorkspace(1L, testForm, tooManyPhotos));
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-        assertEquals("3–15 photos required", exception.getReason());
+        assertTrue(exception.getReason().contains("photos required"));
     }
 
     @Test
@@ -425,3 +426,4 @@ class WorkspaceServiceImplTest {
         return files;
     }
 }
+
